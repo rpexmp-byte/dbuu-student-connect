@@ -45,8 +45,8 @@ export default function BottomSection({ handleClick }) {
       }
     >
       <div className="max-w-6xl w-full px-4 py-[56px] sm:py-[60px] flex flex-col gap-3 sm:gap-7">
-        <h2 className=" text-color-text-darker text-[34px] sm:text-[56px] sm:leading-[70px] font-extralight">
-          Join your colleagues, classmates, and friends on LinkedIn.
+        <h2 className=" text-[#172B52] text-[34px] sm:text-[52px] sm:leading-[66px] font-extralight">
+          Connect with classmates, alumni pass-outs, and faculty mentors at DBUU.
         </h2>
         <div className=" text-xl">
           <RoundedTextButton

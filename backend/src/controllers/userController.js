@@ -84,13 +84,27 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
 
   const {
     fullName,
+    role,
+    department,
+    academicYear,
+    rollNumber,
+    graduationYear,
+    currentPosition,
     profile = {},
     profileImageBase64,
     backgroundImageBase64,
   } = req.body;
 
-  // Update basic fields
+  // Update basic & DBUU campus fields
   if (fullName) user.fullName = fullName;
+  if (role && ['student', 'passout', 'mentor'].includes(role)) user.role = role;
+  if (department !== undefined) user.department = department;
+  if (academicYear !== undefined) user.academicYear = academicYear;
+  if (rollNumber !== undefined) user.rollNumber = rollNumber;
+  if (graduationYear !== undefined) {
+    user.graduationYear = graduationYear ? Number(graduationYear) : null;
+  }
+  if (currentPosition !== undefined) user.currentPosition = currentPosition;
 
   // Update profile fields
   if (profile.firstName) user.profile.firstName = profile.firstName;
@@ -271,8 +285,8 @@ export const getUserPosts = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate('user', 'fullName profilePicURL email profile.headline')
-    .populate('comments.user', 'fullName profilePicURL')
+    .populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition')
+    .populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear')
     .lean();
 
   res.status(200).json({
@@ -300,12 +314,14 @@ export const searchUsers = asyncHandler(async (req, res) => {
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  // Search in fullName and email with regex (case-insensitive)
+  // Search in fullName, email, headline, department, or rollNumber with regex (case-insensitive)
   const searchQuery = {
     active: true,
     $or: [
       { fullName: { $regex: q, $options: 'i' } },
       { email: { $regex: q, $options: 'i' } },
+      { department: { $regex: q, $options: 'i' } },
+      { rollNumber: { $regex: q, $options: 'i' } },
       { 'profile.headline': { $regex: q, $options: 'i' } },
     ],
   };
@@ -313,7 +329,7 @@ export const searchUsers = asyncHandler(async (req, res) => {
   const total = await User.countDocuments(searchQuery);
 
   const users = await User.find(searchQuery)
-    .select('fullName email profilePicURL profile.headline profile.firstName profile.lastName')
+    .select('fullName email profilePicURL role department academicYear rollNumber graduationYear currentPosition profile.headline profile.firstName profile.lastName')
     .skip(skip)
     .limit(parseInt(limit))
     .lean();
@@ -348,7 +364,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   const total = await User.countDocuments(query);
 
   const users = await User.find(query)
-    .select('fullName email profilePicURL profile.headline profile.firstName profile.lastName')
+    .select('fullName email profilePicURL role department academicYear rollNumber graduationYear currentPosition profile.headline profile.firstName profile.lastName')
     .skip(skip)
     .limit(limit)
     .lean();
@@ -488,7 +504,7 @@ export const getUserConnections = asyncHandler(async (req, res) => {
     followers: user._id,
     active: true,
   })
-    .select('fullName profilePicURL profile.headline')
+    .select('fullName profilePicURL role department academicYear rollNumber graduationYear currentPosition profile.headline')
     .limit(limit)
     .lean();
 
@@ -500,6 +516,12 @@ export const getUserConnections = asyncHandler(async (req, res) => {
     headline: connection.profile?.headline || '',
     avatarUrl: connection.profilePicURL,
     profilePicURL: connection.profilePicURL,
+    role: connection.role || 'student',
+    department: connection.department || 'SoEC - Computer Science & Engineering',
+    academicYear: connection.academicYear || '3rd Year',
+    rollNumber: connection.rollNumber || '',
+    graduationYear: connection.graduationYear || null,
+    currentPosition: connection.currentPosition || '',
     mutualConnections: 0, // Would need complex query to calculate
   }));
 
@@ -526,7 +548,7 @@ export const getSuggestedConnections = asyncHandler(async (req, res) => {
     },
     active: true,
   })
-    .select('fullName profilePicURL profile.headline')
+    .select('fullName profilePicURL role department academicYear rollNumber graduationYear currentPosition profile.headline')
     .limit(limit)
     .lean();
 
@@ -537,6 +559,12 @@ export const getSuggestedConnections = asyncHandler(async (req, res) => {
     headline: user.profile?.headline || '',
     avatarUrl: user.profilePicURL,
     profilePicURL: user.profilePicURL,
+    role: user.role || 'student',
+    department: user.department || 'SoEC - Computer Science & Engineering',
+    academicYear: user.academicYear || '3rd Year',
+    rollNumber: user.rollNumber || '',
+    graduationYear: user.graduationYear || null,
+    currentPosition: user.currentPosition || '',
     mutualConnections: 0,
   }));
 

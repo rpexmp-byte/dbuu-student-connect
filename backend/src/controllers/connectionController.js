@@ -164,7 +164,7 @@ export const sendConnectionRequest = async (req, res, next) => {
     });
 
     // Populate sender details
-    await connectionRequest.populate("sender", "fullName profilePicURL profile.headline");
+    await connectionRequest.populate("sender", "fullName profilePicURL profile.headline role department academicYear graduationYear");
 
     // Create notification for the receiver
     await Notification.createNotification({

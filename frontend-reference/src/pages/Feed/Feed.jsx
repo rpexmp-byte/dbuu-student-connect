@@ -39,24 +39,28 @@ export default function Feed() {
   }
 
   return (
-    <div className="bg-color-main-background min-h-screen w-full flex justify-center px-2 sm:px-4 lg:px-6 pt-2 sm:pt-4 lg:pt-6">
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 justify-center w-full max-w-7xl">
-        {/* Left Sidebar - Hidden on mobile, visible on desktop */}
+    <div className="bg-[#F1F5F9] min-h-screen w-full flex justify-center px-3 sm:px-6 lg:px-8 pt-4 sm:pt-5 pb-12">
+      <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 justify-center w-full max-w-[1440px]">
+        {/* Left Sidebar - DBUU Student/Faculty Card */}
         {MediaQueries.minWidth640px.matches ? (
-          <aside className="w-full sm:w-64 lg:w-60 flex-shrink-0">
+          <aside className="w-full sm:w-64 lg:w-[272px] flex-shrink-0">
             <UserInformation objLoggedUser={objLoggedUser} />
           </aside>
         ) : null}
-        
-        {/* Main Feed - Full width on mobile, flex-grow on desktop */}
-        <main className="w-full lg:flex-1 max-w-full lg:max-w-2xl mx-auto">
+
+        {/* Main Feed - Campus Posts & Notices */}
+        <main className="w-full lg:flex-1 max-w-full lg:max-w-[680px] mx-auto">
           <NewsFeed objLoggedUser={objLoggedUser} />
         </main>
 
-        {/* Right Sidebar - Hidden on mobile and tablet, visible on large screens */}
+        {/* Right Sidebar - Phase 2 AI Helpdesk & DBUU Faculty Mentors */}
         {MediaQueries.minWidth640px.matches ? (
-          <aside className="hidden xl:block w-80 flex-shrink-0">
-            <Suspense fallback={<div className="bg-white rounded-lg p-4 shadow-sm h-32 animate-pulse" />}>
+          <aside className="hidden xl:block w-[320px] flex-shrink-0">
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E2E8F0] h-40 animate-pulse" />
+              }
+            >
               <AdsContainer objLoggedUser={objLoggedUser} />
             </Suspense>
           </aside>

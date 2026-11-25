@@ -1,6 +1,4 @@
 import { useEffect, useState, lazy, Suspense } from "react";
-// eslint-disable-next-line no-unused-vars
-import { Post, Profile, User } from "../../../../models";
 // New REST API services
 import { postAPI, adaptPostsFromAPI } from "../../../../services";
 // Legacy Firebase imports (kept for compatibility)
@@ -11,6 +9,10 @@ import { AddPost } from "./components/AddPost";
 import ListFilter from "./components/ListFilter/ListFilter";
 import { PostList } from "./components/PostsList";
 import { usePostModal } from "../../../../contexts/PostModalContext";
+
+/** @typedef {import("../../../../models/User").User} User */
+/** @typedef {import("../../../../models/Profile").Profile} Profile */
+/** @typedef {import("../../../../models/Post").Post} Post */
 
 /**
  *

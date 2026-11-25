@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import NotificationDropdown from "./NotificationDropdown";
 import { getUnreadCount } from "../../services/notificationAPI";
 
-export default function NotificationBell({ className = "", showLabel = true }) {
+export default function NotificationBell({ className = "", showLabel = true, darkBg = false, label = "Notifications" }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
@@ -86,26 +86,36 @@ export default function NotificationBell({ className = "", showLabel = true }) {
       {/* Bell Button */}
       <motion.button
         onClick={handleBellClick}
-        className="relative flex flex-col items-center justify-center gap-1 px-2 py-1 min-w-[60px] hover:bg-gray-100 transition-colors focus:outline-none"
+        className={`relative flex flex-col items-center justify-center gap-0.5 px-2 h-[56px] min-w-[76px] transition-colors focus:outline-none ${
+          darkBg ? "hover:bg-white/10 rounded-lg" : "hover:bg-gray-100"
+        }`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         animate={hasNewNotification ? {
           rotate: [0, -15, 15, -15, 15, 0],
           transition: { duration: 0.5 }
         } : {}}
-        aria-label={`Notifications ${unreadCount > 0 ? `- ${unreadCount} unread` : ""}`}
+        aria-label={`${label} ${unreadCount > 0 ? `- ${unreadCount} unread` : ""}`}
       >
-        <div className={showLabel ? "relative" : "relative"}>
-          {/* LinkedIn-style SVG bell icon */}
+        <div className="relative">
+          {/* Bell icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             data-supported-dps="24x24"
             fill="currentColor"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             focusable="false"
-            className={showDropdown ? "text-color-button-blue" : "text-color-text-darker"}
+            className={
+              darkBg
+                ? showDropdown
+                  ? "text-[#F58220]"
+                  : "text-slate-300"
+                : showDropdown
+                ? "text-color-button-blue"
+                : "text-color-text-darker"
+            }
           >
             <path d="M22 19h-8.28a2 2 0 11-3.44 0H2v-1a4.52 4.52 0 011.17-2.83l1-1.17h15.7l1 1.17A4.42 4.42 0 0122 18zM18.21 7.44A6.27 6.27 0 0012 2a6.27 6.27 0 00-6.21 5.44L5 13h14z"></path>
           </svg>
@@ -134,10 +144,22 @@ export default function NotificationBell({ className = "", showLabel = true }) {
         )}
         </div>
 
-        {/* Label Text - Always visible */}
-        <span className={`text-xs whitespace-nowrap ${showDropdown ? "text-color-button-blue font-semibold" : "text-color-text-darker"}`}>
-          Notifications
-        </span>
+        {/* Label Text */}
+        {showLabel && (
+          <span
+            className={`text-xs font-semibold whitespace-nowrap ${
+              darkBg
+                ? showDropdown
+                  ? "text-[#F58220]"
+                  : "text-slate-300"
+                : showDropdown
+                ? "text-color-button-blue"
+                : "text-color-text-darker"
+            }`}
+          >
+            {label}
+          </span>
+        )}
       </motion.button>
 
       {/* Dropdown */}

@@ -1,8 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-import { User } from "../../../../models";
 import { showNotAvailableToast } from "../../../../utilities";
 import { SearchBox } from "../SearchBox";
 import NotificationBell from "../../../../components/NotificationBell";
+
+/** @typedef {import("../../../../models/User").User} User */
 
 /**
  *

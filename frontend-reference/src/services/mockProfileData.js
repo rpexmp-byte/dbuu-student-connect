@@ -227,7 +227,7 @@ export const mockConnectionsResponse = {
     {
       _id: "user001",
       fullName: "Sarah Johnson",
-      profilePicURL: "https://ui-avatars.com/api/?name=Sarah+Johnson&background=random",
+      profilePicURL: "/avatars/ansh.svg",
       profile: {
         headline: "Product Manager at Innovation Labs"
       },
@@ -237,7 +237,7 @@ export const mockConnectionsResponse = {
     {
       _id: "user002",
       fullName: "Michael Chen",
-      profilePicURL: "https://ui-avatars.com/api/?name=Michael+Chen&background=random",
+      profilePicURL: "/avatars/yash.svg",
       profile: {
         headline: "UX Designer | Creating delightful experiences"
       },
@@ -259,7 +259,7 @@ export const mockSuggestionsResponse = {
     {
       _id: "user003",
       fullName: "Emma Davis",
-      profilePicURL: "https://ui-avatars.com/api/?name=Emma+Davis&background=random",
+      profilePicURL: "/avatars/sumit.svg",
       profile: {
         headline: "Frontend Developer | React & TypeScript"
       },
@@ -269,7 +269,7 @@ export const mockSuggestionsResponse = {
     {
       _id: "user004",
       fullName: "James Wilson",
-      profilePicURL: "https://ui-avatars.com/api/?name=James+Wilson&background=random",
+      profilePicURL: "/avatars/rohan.svg",
       profile: {
         headline: "DevOps Engineer | AWS Certified"
       },
@@ -344,17 +344,17 @@ export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // UTILITY: Mock API Client for Development
 // ============================================================================
 export const mockAPI = {
-  getUserProfile: async (userId) => {
+  getUserProfile: async () => {
     await delay(800); // Simulate network delay
     return mockProfileResponse;
   },
 
-  getUserPosts: async (userId, page = 1, limit = 10) => {
+  getUserPosts: async () => {
     await delay(600);
     return mockUserPostsResponse;
   },
 
-  followUser: async (userId) => {
+  followUser: async () => {
     await delay(400);
     // Simulate 10% error rate for testing
     if (Math.random() < 0.1) {
@@ -363,12 +363,12 @@ export const mockAPI = {
     return mockFollowResponse;
   },
 
-  unfollowUser: async (userId) => {
+  unfollowUser: async () => {
     await delay(400);
     return mockUnfollowResponse;
   },
 
-  getConnections: async (userId) => {
+  getConnections: async () => {
     await delay(500);
     return mockConnectionsResponse;
   },

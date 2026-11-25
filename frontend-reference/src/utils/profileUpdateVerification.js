@@ -205,11 +205,11 @@ export function testComponentRerender() {
     
     // Check for profile elements in DOM
     const profileElements = {
-      header: document.querySelector('[role="region"][aria-label="Profile header"]'),
-      about: document.querySelector('[role="region"][aria-label="About"]'),
-      experience: document.querySelector('[role="region"][aria-label="Experience"]'),
-      education: document.querySelector('[role="region"][aria-label="Education"]'),
-      skills: document.querySelector('[role="region"][aria-label="Skills"]'),
+      header: document.querySelector("[role=\"region\"][aria-label=\"Profile header\"]"),
+      about: document.querySelector("[role=\"region\"][aria-label=\"About\"]"),
+      experience: document.querySelector("[role=\"region\"][aria-label=\"Experience\"]"),
+      education: document.querySelector("[role=\"region\"][aria-label=\"Education\"]"),
+      skills: document.querySelector("[role=\"region\"][aria-label=\"Skills\"]"),
     };
     
     console.log("Profile sections found in DOM:");

@@ -1,7 +1,6 @@
-// eslint-disable-next-line no-unused-vars
-import { RootState } from "../redux/store";
-// eslint-disable-next-line no-unused-vars
-import { User } from "../models/User";
+
+/** @typedef {import("../redux/store").RootState} RootState */
+/** @typedef {import("../models/User").User} User */
 
 /**
  * @param {RootState} state

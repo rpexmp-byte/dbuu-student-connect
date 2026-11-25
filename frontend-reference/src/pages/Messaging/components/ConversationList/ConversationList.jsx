@@ -5,6 +5,7 @@
 
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { resolveAvatarUrl } from "../../../../utilities/CampusRoleUtils";
 import "./ConversationList.css";
 
 export default function ConversationList({
@@ -75,9 +76,12 @@ export default function ConversationList({
                 {/* Avatar */}
                 <div className="conversation-avatar">
                   <img
-                    src={otherUser?.profilePicURL || "/default-avatar.png"}
+                    src={resolveAvatarUrl(otherUser?.profilePicURL)}
                     alt={otherUser?.fullName || "User"}
                     className="avatar-img"
+                    onError={(e) => {
+                      e.currentTarget.src = "/student_avatar.jpg";
+                    }}
                   />
                   {/* Online indicator - can be added later */}
                 </div>

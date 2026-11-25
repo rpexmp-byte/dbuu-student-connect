@@ -61,7 +61,7 @@ export const getOrCreateConversation = async (req, res, next) => {
     const conversation = await Conversation.findOrCreate([userId, recipientId]);
 
     // Populate participants with full user info
-    await conversation.populate("participants", "fullName profilePicURL headline email");
+    await conversation.populate("participants", "fullName profilePicURL headline profile.headline email role department academicYear rollNumber graduationYear currentPosition");
     await conversation.populate({
       path: "lastMessage",
       select: "content sender createdAt",
@@ -190,7 +190,7 @@ export const sendMessage = async (req, res, next) => {
     });
 
     // Populate sender info
-    await message.populate("sender", "fullName profilePicURL headline");
+    await message.populate("sender", "fullName profilePicURL headline profile.headline role department academicYear graduationYear");
 
     // Update conversation
     conversation.lastMessage = message._id;

@@ -6,6 +6,11 @@ import { Outlet } from "react-router-dom";
 import { MobileNavBarTop } from "./components/MobileNavBar";
 import { MobileNavBarBottom } from "./components/MobileNavBar";
 import MediaQueries from "../../utilities/MediaQueries";
+import {
+  clearAuthStorage,
+  getAuthToken,
+  getStoredUserString,
+} from "../../utilities/authStorage";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "../../redux/thunks";
 
@@ -21,8 +26,8 @@ export default function MainMenuBar() {
     let isMounted = true;
     
     const checkAuthentication = async () => {
-      const token = localStorage.getItem("token");
-      const savedUser = localStorage.getItem("user");
+      const token = getAuthToken();
+      const savedUser = getStoredUserString();
       
       console.log("MainMenuBar - Auth check:", { 
         hasToken: !!token, 
@@ -41,9 +46,7 @@ export default function MainMenuBar() {
           console.error("MainMenuBar - Auth check failed:", error);
           // Clear invalid tokens and user data
           if (isMounted) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("user");
+            clearAuthStorage();
           }
         }
       }
@@ -73,7 +76,7 @@ export default function MainMenuBar() {
   }
 
   // After auth check, if not authenticated and no user, redirect
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   const hasUser = objLoggedUser && objLoggedUser.strUserId && objLoggedUser.strUserId.length > 0;
   
   if (!hasUser && !token) {

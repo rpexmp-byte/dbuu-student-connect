@@ -3,29 +3,28 @@
  * @description Integration tests for like/unlike functionality with optimistic updates
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { configureStore } from '@reduxjs/toolkit';
-import postReducer from '../redux/states/postSlice';
-import { toggleLike } from '../redux/thunks/postThunks';
-import * as postAPI from '../services/postService';
+import { configureStore } from "@reduxjs/toolkit";
+import postReducer from "../redux/states/postSlice";
+import { toggleLike } from "../redux/thunks/postThunks";
+import * as postAPI from "../services/postService";
 
 // Mock the post API
-vi.mock('../services/postService');
+jest.mock("../services/postService");
 
-describe('Like/Unlike Functionality', () => {
+describe("Like/Unlike Functionality", () => {
   let store;
-  const mockUserId = 'user123';
-  const mockPostId = 'post456';
+  const mockUserId = "user123";
+  const mockPostId = "post456";
   
   const mockPost = {
     _id: mockPostId,
-    text: 'Test post',
+    text: "Test post",
     likes: [],
     likeCount: 0,
     user: {
-      _id: 'creator123',
-      fullName: 'Test User',
-      profilePicURL: 'https://example.com/pic.jpg',
+      _id: "creator123",
+      fullName: "Test User",
+      profilePicURL: "https://example.com/pic.jpg",
     },
   };
 
@@ -38,11 +37,11 @@ describe('Like/Unlike Functionality', () => {
     });
 
     // Reset mocks
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
-  describe('Optimistic Updates', () => {
-    it('should optimistically add like when user clicks like button', async () => {
+  describe("Optimistic Updates", () => {
+    it("should optimistically add like when user clicks like button", async () => {
       // Setup: Post with no likes
       const initialState = {
         posts: {
@@ -104,7 +103,7 @@ describe('Like/Unlike Functionality', () => {
       expect(finalPost.likes).toContain(mockUserId);
     });
 
-    it('should optimistically remove like when user unlikes', async () => {
+    it("should optimistically remove like when user unlikes", async () => {
       // Setup: Post with user's like
       const initialState = {
         posts: {
@@ -150,8 +149,8 @@ describe('Like/Unlike Functionality', () => {
     });
   });
 
-  describe('Error Handling & Rollback', () => {
-    it('should rollback optimistic update on API error', async () => {
+  describe("Error Handling & Rollback", () => {
+    it("should rollback optimistic update on API error", async () => {
       const initialState = {
         posts: {
           posts: [
@@ -173,7 +172,7 @@ describe('Like/Unlike Functionality', () => {
 
       // Mock API to fail
       postAPI.toggleLikePost.mockRejectedValue({
-        response: { data: { message: 'Network error' } },
+        response: { data: { message: "Network error" } },
       });
 
       // Dispatch like action
@@ -194,10 +193,10 @@ describe('Like/Unlike Functionality', () => {
       expect(post._isLikePending).toBe(false);
     });
 
-    it('should not show false positive success when API fails', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+    it("should not show false positive success when API fails", async () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
       
-      postAPI.toggleLikePost.mockRejectedValue(new Error('Server error'));
+      postAPI.toggleLikePost.mockRejectedValue(new Error("Server error"));
 
       try {
         await store.dispatch(
@@ -212,8 +211,8 @@ describe('Like/Unlike Functionality', () => {
     });
   });
 
-  describe('Idempotency', () => {
-    it('should handle rapid double clicks correctly', async () => {
+  describe("Idempotency", () => {
+    it("should handle rapid double clicks correctly", async () => {
       const initialState = {
         posts: {
           posts: [
@@ -260,8 +259,8 @@ describe('Like/Unlike Functionality', () => {
     });
   });
 
-  describe('Server State Reconciliation', () => {
-    it('should use server canonical state over optimistic state', async () => {
+  describe("Server State Reconciliation", () => {
+    it("should use server canonical state over optimistic state", async () => {
       // Simulate scenario where optimistic state differs from server
       const initialState = {
         posts: {
@@ -289,7 +288,7 @@ describe('Like/Unlike Functionality', () => {
         likeCount: 3, // Other users also liked
         post: {
           ...mockPost,
-          likes: [mockUserId, 'user2', 'user3'],
+          likes: [mockUserId, "user2", "user3"],
           likeCount: 3,
         },
       });

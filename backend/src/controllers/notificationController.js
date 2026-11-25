@@ -38,7 +38,7 @@ export const getNotifications = async (req, res) => {
 
     // Get notifications
     const notifications = await Notification.find(query)
-      .populate('sender', 'fullName profilePicURL profile.headline')
+      .populate('sender', 'fullName profilePicURL profile.headline role department academicYear graduationYear')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)

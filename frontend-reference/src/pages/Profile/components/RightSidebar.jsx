@@ -17,49 +17,49 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { showCustomTextToast } from "../../../utilities";
 
 export default function RightSidebar({ profile }) {
   const navigate = useNavigate();
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
-  // Suggested connections (mock data - replace with API call)
+  // DBUU Campus Mentors & Cohort Peers (local avatars per Section 7)
   const suggestedConnections = [
     {
-      id: "1",
-      name: "Sarah Johnson",
-      headline: "Product Manager at Tech Corp",
-      avatarUrl: "https://ui-avatars.com/api/?name=Sarah+Johnson&background=random",
-      mutualConnections: 12
+      id: "mentor-sumit",
+      name: "Dr. Sumit Sharma",
+      headline: "Professor (CSE), SoEC • Project Supervisor",
+      avatarUrl: "/avatars/sumit.svg",
+      mutualConnections: 4
     },
     {
-      id: "2",
-      name: "Michael Chen",
-      headline: "Software Engineer at StartupXYZ",
-      avatarUrl: "https://ui-avatars.com/api/?name=Michael+Chen&background=random",
-      mutualConnections: 8
+      id: "alumni-rohan",
+      name: "Rohan Rawat",
+      headline: "Alumni '24 • Software Engineer at Infosys",
+      avatarUrl: "/avatars/rohan.svg",
+      mutualConnections: 4
     },
     {
-      id: "3",
-      name: "Emma Davis",
-      headline: "UX Designer | Creative Studio",
-      avatarUrl: "https://ui-avatars.com/api/?name=Emma+Davis&background=random",
-      mutualConnections: 15
+      id: "peer-ansh",
+      name: "Ansh",
+      headline: "B.Tech CSE (3rd Year) • UI/UX & Frontend",
+      avatarUrl: "/avatars/ansh.svg",
+      mutualConnections: 4
     }
   ];
 
-  // People also viewed (mock data)
   const peopleViewed = [
     {
-      id: "4",
-      name: "James Wilson",
-      headline: "Senior Developer",
-      avatarUrl: "https://ui-avatars.com/api/?name=James+Wilson&background=random"
+      id: "peer-yash",
+      name: "Yash Kholiya",
+      headline: "B.Tech CSE (AI & ML) • Semantic AI Track",
+      avatarUrl: "/avatars/yash.svg"
     },
     {
-      id: "5",
-      name: "Lisa Anderson",
-      headline: "Marketing Director",
-      avatarUrl: "https://ui-avatars.com/api/?name=Lisa+Anderson&background=random"
+      id: "peer-rajat",
+      name: "Rajat Kishore",
+      headline: "B.Tech CSE (3rd Year) • Backend Lead",
+      avatarUrl: "/avatars/rajat.svg"
     }
   ];
 
@@ -131,7 +131,7 @@ export default function RightSidebar({ profile }) {
             Public profile & URL
           </label>
           <a
-            href={`/linkedin/profile/${profile._id}`}
+            href={`/profile/${profile._id}`}
             className="text-sm text-color-button-blue hover:underline focus:outline-none focus:ring-2 focus:ring-color-button-blue rounded px-1 break-all"
             target="_blank"
             rel="noopener noreferrer"
@@ -161,7 +161,9 @@ export default function RightSidebar({ profile }) {
               key={connection.id}
               className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
               whileHover={{ x: 4 }}
-              onClick={() => navigate(`/profile/${connection.id}`)}
+              onClick={() =>
+                showCustomTextToast(`Search "${connection.name}" in the top bar to open their profile.`, 2.5)
+              }
             >
               <div className="flex gap-3">
                 {/* Avatar */}
@@ -191,7 +193,7 @@ export default function RightSidebar({ profile }) {
               <motion.button
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Connect with:", connection.name);
+                  showCustomTextToast(`Search "${connection.name}" in the top bar to send a connection request.`, 2.5);
                 }}
                 className="w-full mt-3 px-4 py-1.5 border border-color-button-blue text-color-button-blue rounded-full text-sm font-semibold hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-color-button-blue focus:ring-offset-2"
                 whileHover={{ scale: 1.02 }}
@@ -234,7 +236,9 @@ export default function RightSidebar({ profile }) {
               key={person.id}
               className="w-full p-4 flex gap-3 items-center hover:bg-gray-50 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-color-button-blue"
               whileHover={{ x: 4 }}
-              onClick={() => navigate(`/profile/${person.id}`)}
+              onClick={() =>
+                showCustomTextToast(`Search "${person.name}" in the top bar to view their profile.`, 2.5)
+              }
             >
               <img
                 src={person.avatarUrl}
@@ -255,7 +259,7 @@ export default function RightSidebar({ profile }) {
         </div>
       </motion.div>
 
-      {/* LinkedIn Learning Ad Card */}
+      {/* DBUU Campus Resources Card */}
       <motion.div
         variants={cardVariants}
         initial="hidden"
@@ -265,50 +269,34 @@ export default function RightSidebar({ profile }) {
       >
         <div className="p-4">
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center flex-shrink-0">
-              <i className="fas fa-graduation-cap text-white" aria-hidden="true" />
+            <div className="w-10 h-10 bg-gradient-to-br from-[#172B52] to-[#223B6B] rounded flex items-center justify-center flex-shrink-0">
+              <i className="fas fa-graduation-cap text-[#F58220]" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-sm text-color-text-darker mb-1">
-                Expand your skills
+              <h3 className="font-semibold text-sm text-[#172B52] mb-1">
+                DBUU Academic Resources
               </h3>
-              <p className="text-xs text-color-text">
-                Explore courses recommended for you
+              <p className="text-xs text-slate-500">
+                Phase 2 AI Helpdesk &amp; syllabus matching queued
               </p>
             </div>
           </div>
 
           <motion.button
-            className="w-full px-4 py-2 bg-color-button-blue text-white rounded-lg text-sm font-semibold hover:bg-color-button-blue-darker transition-colors focus:outline-none focus:ring-2 focus:ring-color-button-blue focus:ring-offset-2"
+            onClick={() => navigate("/feed")}
+            className="w-full px-4 py-2 bg-[#172B52] text-white rounded-lg text-sm font-semibold hover:bg-[#0D1A33] transition-colors focus:outline-none focus:ring-2 focus:ring-[#F58220] focus:ring-offset-2"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Browse courses
+            Back to Campus Feed
           </motion.button>
         </div>
       </motion.div>
 
       {/* Footer Links */}
       <div className="px-4 py-3 text-center">
-        <div className="flex flex-wrap justify-center gap-3 text-xs text-color-text mb-2">
-          <a href="/about" className="hover:text-color-button-blue hover:underline">
-            About
-          </a>
-          <a href="/accessibility" className="hover:text-color-button-blue hover:underline">
-            Accessibility
-          </a>
-          <a href="/help" className="hover:text-color-button-blue hover:underline">
-            Help Center
-          </a>
-          <a href="/privacy" className="hover:text-color-button-blue hover:underline">
-            Privacy
-          </a>
-          <a href="/terms" className="hover:text-color-button-blue hover:underline">
-            Terms
-          </a>
-        </div>
         <p className="text-xs text-color-text-low-emphasis">
-          LinkedIn Clone © 2025
+          DBUU Student Connect © {new Date().getFullYear()}
         </p>
       </div>
     </aside>

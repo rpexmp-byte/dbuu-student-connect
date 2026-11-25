@@ -4,8 +4,8 @@ import {
   shapeProfileIntro,
 } from "../models";
 import { CollectionNames } from "../utilities/Enums";
-// eslint-disable-next-line no-unused-vars
-import { Profile } from "../models";
+
+/** @typedef {import("../models/Profile").Profile} Profile */
 import {
   createWithId,
   selectAll,

@@ -1,9 +1,9 @@
 import { shapeUser } from "../models/User";
 import { CollectionNames } from "../utilities/Enums";
 import { createWithId, selectById } from "./firestoreUtil";
-// eslint-disable-next-line no-unused-vars
-import { User } from "../models/User";
 import { userFromDataBase } from "../adapters/UserAdapter";
+
+/** @typedef {import("../models/User").User} User */
 
 /**
  * @module ServiceUser

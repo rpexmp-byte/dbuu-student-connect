@@ -16,6 +16,9 @@
  * @property {boolean} booActive
  * @property {string[]} likes - Array of user IDs who liked the post
  * @property {Object[]} comments - Array of comment objects
+ * @property {string[]} [tags] - Campus academic domain tags
+ * @property {("none"|"open"|"resolved")} [queryStatus] - Doubt resolution state
+ * @property {string|null} [resolvedBy] - User ID who verified/resolved the doubt
  */
 
 /**
@@ -32,6 +35,7 @@
  * @param {boolean} booActive
  * @param {string[]} likes
  * @param {Object[]} comments
+ * @param {Object} [objCampusPostMeta]
  * @returns {Post}
  */
 function shapePost(
@@ -46,7 +50,8 @@ function shapePost(
   dtCreatedOn,
   booActive,
   likes = [],
-  comments = []
+  comments = [],
+  objCampusPostMeta = {}
 ) {
   return {
     strPostId,
@@ -61,6 +66,9 @@ function shapePost(
     booActive,
     likes,
     comments,
+    tags: objCampusPostMeta.tags || [],
+    queryStatus: objCampusPostMeta.queryStatus || "none",
+    resolvedBy: objCampusPostMeta.resolvedBy || null,
   };
 }
 

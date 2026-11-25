@@ -1,5 +1,6 @@
-// eslint-disable-next-line no-unused-vars
-import { shapeUser, User } from "../models/User";
+import { shapeUser } from "../models/User";
+
+/** @typedef {import("../models/User").User} User */
 
 /**
  *
@@ -15,7 +16,15 @@ const userFromDataBase = (objRawUser) => {
       objRawUser.strAuthMethod,
       objRawUser.strProfilePicURL,
       objRawUser.dtCreatedOn.toDate(),
-      objRawUser.booActive
+      objRawUser.booActive,
+      {
+        strRole: objRawUser.strRole,
+        strDepartment: objRawUser.strDepartment,
+        strAcademicYear: objRawUser.strAcademicYear,
+        strRollNumber: objRawUser.strRollNumber,
+        intGraduationYear: objRawUser.intGraduationYear,
+        strCurrentPosition: objRawUser.strCurrentPosition,
+      }
     );
 
     if (objUser) {

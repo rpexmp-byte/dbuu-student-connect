@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { messageAPI } from "../../../../services";
 import { useSocket } from "../../../../contexts/SocketContext";
+import { resolveAvatarUrl } from "../../../../utilities/CampusRoleUtils";
 import { playNotificationSound, isWindowActive } from "../../../../utilities/notificationSound";
 import MessageComposer from "../MessageComposer";
 import "./ChatWindow.css";
@@ -162,10 +163,12 @@ export default function ChatWindow({
 
     try {
       const newMessage = await messageAPI.sendMessage(conversation._id, content.trim());
-      
-      // Add to messages list (Socket.io will also send it, but we show optimistically)
-      setMessages(prev => [...prev, newMessage]);
-      
+
+      // Deduplicate against Socket.io broadcast that may arrive before/after REST response
+      setMessages((prev) =>
+        prev.some((m) => m._id === newMessage._id) ? prev : [...prev, newMessage]
+      );
+
       // Notify parent
       if (onNewMessage) {
         onNewMessage(newMessage);
@@ -227,12 +230,15 @@ export default function ChatWindow({
             onClick={handleUserProfileClick}
           >
             <img
-              src={otherUser?.profilePicURL || "/default-avatar.png"}
+              src={resolveAvatarUrl(otherUser?.profilePicURL)}
               alt={otherUser?.fullName}
               className="chat-header-avatar"
               style={{ transition: "opacity 0.2s" }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onError={(e) => {
+                e.currentTarget.src = "/student_avatar.jpg";
+              }}
             />
             {/* Online status indicator */}
             <span 

@@ -13,6 +13,12 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  clearAuthStorage,
+  getStoredUserObj,
+  notifyAuthChanged,
+  setStoredUser,
+} from "../utilities/authStorage";
 
 const UserContext = createContext(null);
 
@@ -24,25 +30,24 @@ export function UserProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize user from localStorage on mount
+  // Initialize user from per-tab sessionStorage on mount & sync on auth changes
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        setCurrentUser(userData);
-      }
-    } catch (error) {
-      console.error("Error loading user from localStorage:", error);
-    } finally {
+    const syncUserFromStorage = () => {
+      setCurrentUser(getStoredUserObj());
       setLoading(false);
-    }
+    };
+
+    syncUserFromStorage();
+    window.addEventListener("auth-changed", syncUserFromStorage);
+    return () => {
+      window.removeEventListener("auth-changed", syncUserFromStorage);
+    };
   }, []);
 
   /**
    * Update current user data
    * - Updates state
-   * - Syncs with localStorage
+   * - Syncs with per-tab sessionStorage
    * - Merges with existing data
    */
   const updateUser = useCallback((userData) => {
@@ -56,13 +61,8 @@ export function UserProvider({ children }) {
         },
       };
 
-      // Sync with localStorage
-      try {
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-      } catch (error) {
-        console.error("Error saving user to localStorage:", error);
-      }
-
+      setStoredUser(updatedUser);
+      notifyAuthChanged();
       return updatedUser;
     });
   }, []);
@@ -81,13 +81,8 @@ export function UserProvider({ children }) {
         },
       };
 
-      // Sync with localStorage
-      try {
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-      } catch (error) {
-        console.error("Error saving user to localStorage:", error);
-      }
-
+      setStoredUser(updatedUser);
+      notifyAuthChanged();
       return updatedUser;
     });
   }, []);
@@ -97,12 +92,7 @@ export function UserProvider({ children }) {
    */
   const clearUser = useCallback(() => {
     setCurrentUser(null);
-    try {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-    } catch (error) {
-      console.error("Error clearing user data:", error);
-    }
+    clearAuthStorage();
   }, []);
 
   /**
@@ -110,11 +100,8 @@ export function UserProvider({ children }) {
    */
   const setUser = useCallback((userData) => {
     setCurrentUser(userData);
-    try {
-      localStorage.setItem("user", JSON.stringify(userData));
-    } catch (error) {
-      console.error("Error saving user to localStorage:", error);
-    }
+    setStoredUser(userData);
+    notifyAuthChanged();
   }, []);
 
   const value = {

@@ -9,6 +9,7 @@ import { ReactionButton, ReactionPicker } from "../../../../../../../../../../..
 import useCommentReaction from "../../../../../../../../../../../../hooks/useCommentReaction";
 import { formatReactionCounts } from "../../../../../../../../../../../../constants/reactions";
 import { connectionAPI } from "../../../../../../../../../../../../services";
+import { getAuthToken } from "../../../../../../../../../../../../utilities/authStorage";
 import "./CommentItem.css";
 
 // API Base URL from environment variable
@@ -102,7 +103,7 @@ export default function CommentItem({ comment, postId, currentUserId, onDelete, 
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(
         `${API_BASE_URL}/posts/${postId}/comments/${comment._id}`,
         {

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Dr. Sumit Sharma Mentor Avatar">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#78350F"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="64" fill="url(#bg)"/>
+  <circle cx="64" cy="48" r="22" fill="#FEF3C7"/>
+  <path d="M24 114c4-22 20-34 40-34s36 12 40 34" fill="#172B52"/>
+  <text x="64" y="56" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="20" fill="#78350F">SS</text>
+</svg>

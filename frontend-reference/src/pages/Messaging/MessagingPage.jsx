@@ -73,9 +73,8 @@ export default function MessagingPage() {
   useEffect(() => {
     if (!socket) return;
 
-    // Listen for new messages
-    socket.on("new_message", ({ message, conversationId }) => {
-      // Update conversation list with new message
+    // Listen for new messages without wiping other listeners on socket
+    const handleIncomingMessage = ({ message, conversationId }) => {
       setConversations(prev => 
         prev.map(conv => 
           conv._id === conversationId
@@ -83,11 +82,12 @@ export default function MessagingPage() {
             : conv
         )
       );
-    });
+    };
+    socket.on("new_message", handleIncomingMessage);
 
     // Cleanup on unmount
     return () => {
-      socket.off("new_message");
+      socket.off("new_message", handleIncomingMessage);
     };
   }, [socket]);
 

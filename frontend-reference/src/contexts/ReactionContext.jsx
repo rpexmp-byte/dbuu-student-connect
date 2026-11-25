@@ -17,6 +17,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { getAuthToken } from "../utilities/authStorage";
 
 // Create context
 // @ts-ignore - Context value provided by ReactionProvider
@@ -25,8 +26,9 @@ const ReactionContext = createContext(null);
 // API base URL
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
-// LocalStorage key for reaction cache
-const REACTION_CACHE_KEY = "reactionCache";
+// Per-user storage key so multi-tab sessions don't collide reactions
+const getReactionCacheKey = (userId) =>
+  userId ? `reactionCache_${userId}` : "reactionCache";
 
 /**
  * ReactionProvider Component
@@ -43,23 +45,22 @@ export const ReactionProvider = ({ children, currentUser }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   /**
-   * Step 1: Load from localStorage instantly on mount (before backend)
-   * This ensures instant display of reactions on page load
+   * Step 1: Load per-user cached reactions on mount or user switch
    */
   useEffect(() => {
+    const cacheKey = getReactionCacheKey(currentUser?._id);
     try {
-      const cached = localStorage.getItem(REACTION_CACHE_KEY);
+      const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
-        const parsedCache = JSON.parse(cached);
-        setReactionCache(parsedCache);
-        console.log(`💾 Loaded ${Object.keys(parsedCache).length} reactions from localStorage`);
+        setReactionCache(JSON.parse(cached));
+      } else {
+        setReactionCache({});
       }
     } catch (error) {
-      console.error("❌ Failed to load reactions from localStorage:", error);
-      // Clear corrupted cache
-      localStorage.removeItem(REACTION_CACHE_KEY);
+      console.error("❌ Failed to load reactions from sessionStorage:", error);
+      sessionStorage.removeItem(cacheKey);
     }
-  }, []); // Run once on mount
+  }, [currentUser?._id]);
 
   /**
    * Step 2: Fetch all user reactions from backend and merge with localStorage
@@ -68,7 +69,7 @@ export const ReactionProvider = ({ children, currentUser }) => {
   useEffect(() => {
     const loadUserReactions = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getAuthToken();
         if (!token) {
           console.log("No token found, skipping backend reaction load");
           setIsLoaded(true);
@@ -96,14 +97,11 @@ export const ReactionProvider = ({ children, currentUser }) => {
           // Merge with existing cache (backend wins)
           setReactionCache(prev => {
             const merged = { ...prev, ...backendMap };
-            
-            // Persist merged state to localStorage
             try {
-              localStorage.setItem(REACTION_CACHE_KEY, JSON.stringify(merged));
+              sessionStorage.setItem(getReactionCacheKey(currentUser?._id), JSON.stringify(merged));
             } catch (error) {
-              console.error("❌ Failed to persist reactions to localStorage:", error);
+              console.error("❌ Failed to persist reactions to sessionStorage:", error);
             }
-            
             return merged;
           });
 
@@ -167,6 +165,9 @@ export const ReactionProvider = ({ children, currentUser }) => {
       console.error("Missing required parameters for updateReaction");
       return null;
     }
+
+    // Per-user session storage key
+    const storageKey = getReactionCacheKey(currentUser?._id || userId);
 
     // Prevent duplicate requests
     const requestKey = `${postId}-${reactionType}`;
@@ -237,11 +238,11 @@ export const ReactionProvider = ({ children, currentUser }) => {
     setReactionCache(prev => {
       const updated = { ...prev, [postId]: optimisticState };
       
-      // Persist optimistic state to localStorage immediately
+      // Persist optimistic state to sessionStorage immediately
       try {
-        localStorage.setItem(REACTION_CACHE_KEY, JSON.stringify(updated));
+        sessionStorage.setItem(storageKey, JSON.stringify(updated));
       } catch (error) {
-        console.error("❌ Failed to persist reaction to localStorage:", error);
+        console.error("❌ Failed to persist reaction to sessionStorage:", error);
       }
       
       return updated;
@@ -252,7 +253,7 @@ export const ReactionProvider = ({ children, currentUser }) => {
 
     try {
       // Make API call
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await axios.post(
         `${API_URL}/posts/${postId}/react`,
         { reactionType },
@@ -277,11 +278,11 @@ export const ReactionProvider = ({ children, currentUser }) => {
       setReactionCache(prev => {
         const updated = { ...prev, [postId]: serverState };
         
-        // Persist server state to localStorage
+        // Persist server state to sessionStorage
         try {
-          localStorage.setItem(REACTION_CACHE_KEY, JSON.stringify(updated));
+          sessionStorage.setItem(storageKey, JSON.stringify(updated));
         } catch (error) {
-          console.error("❌ Failed to persist reaction to localStorage:", error);
+          console.error("❌ Failed to persist reaction to sessionStorage:", error);
         }
         
         return updated;
@@ -308,11 +309,11 @@ export const ReactionProvider = ({ children, currentUser }) => {
           }
         };
         
-        // Persist rollback to localStorage
+        // Persist rollback to sessionStorage
         try {
-          localStorage.setItem(REACTION_CACHE_KEY, JSON.stringify(rolledBack));
+          sessionStorage.setItem(storageKey, JSON.stringify(rolledBack));
         } catch (error) {
-          console.error("❌ Failed to persist rollback to localStorage:", error);
+          console.error("❌ Failed to persist rollback to sessionStorage:", error);
         }
         
         return rolledBack;
@@ -329,7 +330,7 @@ export const ReactionProvider = ({ children, currentUser }) => {
         return newSet;
       });
     }
-  }, [reactionCache, pendingRequests]);
+  }, [reactionCache, pendingRequests, currentUser?._id]);
 
   /**
    * Sync reactions from API response (used when fetching posts)
@@ -378,14 +379,14 @@ export const ReactionProvider = ({ children, currentUser }) => {
     setReactionCache({});
     setPendingRequests(new Set());
     
-    // Clear localStorage
+    // Clear sessionStorage
     try {
-      localStorage.removeItem(REACTION_CACHE_KEY);
+      sessionStorage.removeItem(getReactionCacheKey(currentUser?._id));
       console.log("🧹 Reaction cache cleared");
     } catch (error) {
-      console.error("❌ Failed to clear reaction cache from localStorage:", error);
+      console.error("❌ Failed to clear reaction cache from sessionStorage:", error);
     }
-  }, []);
+  }, [currentUser?._id]);
 
   const value = {
     reactionCache,

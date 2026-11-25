@@ -16,3 +16,6 @@ export { DeleteModal } from "./DeleteModal";
 // Loading Components
 export { default as Loader } from "./Loader/Loader";
 export { LinkedInLoader } from "./LinkedInLoader";
+
+// DBUU Campus Components
+export { default as RoleBadge } from "./RoleBadge/RoleBadge";

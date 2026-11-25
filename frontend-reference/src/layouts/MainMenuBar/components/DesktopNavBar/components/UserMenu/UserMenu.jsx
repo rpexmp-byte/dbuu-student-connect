@@ -1,13 +1,13 @@
 import { useDispatch } from "react-redux/es/hooks/useDispatch";
 import { useNavigate } from "react-router-dom";
 import UserCard from "../../../../../../components/UserCard/UserCard";
-// eslint-disable-next-line no-unused-vars
-import { User } from "../../../../../../models/User";
 import { clearLogedUser } from "../../../../../../redux";
-import { googleSignOutUser } from "../../../../../../services";
-import { showNotAvailableToast } from "../../../../../../utilities";
+import { authAPI } from "../../../../../../services";
+import { showCustomTextToast } from "../../../../../../utilities";
 import { GroupTitle } from "./components/GroupTitle";
 import { LinkOption } from "./components/LinkOption";
+
+/** @typedef {import("../../../../../../models/User").User} User */
 
 /**
  *
@@ -20,83 +20,62 @@ export default function UserMenu({ objLoggedUser, handleCloseEvent }) {
   const dispatch = useDispatch();
   const objNavigate = useNavigate();
 
-  const handleNotAvailableClick = () => {
-    showNotAvailableToast();
+  const handleComingSoonClick = (feature) => {
+    showCustomTextToast(`${feature} will be enabled in the next campus update`, 3);
   };
 
-  const handleLogOut = () => {
-    googleSignOutUser()
-      .then(() => {
-        dispatch(clearLogedUser);
-        objNavigate("/");
-      })
-      .catch((error) => console.log(error));
+  const handleLogOut = async () => {
+    try {
+      await authAPI.logoutUser();
+      dispatch(clearLogedUser());
+      objNavigate("/");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
     <div
       tabIndex={-1}
-      className="absolute w-[264px] h-[400px] rounded-lg rounded-tr-none shadow-lg bg-white top-[60px] right-0 z-10 "
+      className="absolute w-[280px] rounded-2xl shadow-xl border border-slate-200 bg-white top-[60px] right-0 z-50 text-slate-800"
       onBlur={handleCloseEvent}
     >
-      <div className="flex flex-col h-full p-2 pb-0 pt-[6px]">
+      <div className="flex flex-col p-3 gap-2">
         <div>
           <UserCard objLoggedUser={objLoggedUser} strDirection="Horizontal" />
         </div>
-        <div className="text-color-text-low-emphasis border-solid border-t flex flex-col gap-[6px] px-1 mt-[6px]">
-          <GroupTitle strText="Account" />
-          <button
-            type="button"
-            onClick={handleNotAvailableClick}
-            className="flex items-center gap-1 text-color-text text-sm font-bold hover:text-color-blue cursor-pointer w-fit"
-          >
-            <svg
-              className="w-4 h-4"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              data-supported-dps="24x24"
-              width="24"
-              height="24"
-              focusable="false"
-            >
-              <path
-                d="M20 20a3.36 3.36 0 001-2.39V6.38A3.38 3.38 0 0017.62 3H6.38A3.36 3.36 0 004 4z"
-                fill="#f8c77e"
-              ></path>
-              <path
-                d="M4 4a3.36 3.36 0 00-1 2.38v11.24A3.38 3.38 0 006.38 21h11.24A3.36 3.36 0 0020 20z"
-                fill="#e7a33e"
-              ></path>
-            </svg>
-            Try Premium for free
-          </button>
+        <div className="text-color-text-low-emphasis border-solid border-t border-slate-100 flex flex-col gap-1.5 px-1 pt-2">
+          <GroupTitle strText="Campus Account" />
           <LinkOption
-            strText="Settings & Privacy"
-            handleClick={handleNotAvailableClick}
+            strText="AI Helpdesk (Phase 2 Soon)"
+            handleClick={() => handleComingSoonClick("AI Helpdesk")}
           />
-          <LinkOption strText="Help" handleClick={handleNotAvailableClick} />
           <LinkOption
-            strText="Language"
-            handleClick={handleNotAvailableClick}
+            strText="Campus Guidelines"
+            handleClick={() => handleComingSoonClick("Campus Guidelines")}
           />
         </div>
-        <div className=" flex flex-col gap-[6px] px-1 text-color-text-low-emphasis border-solid border-t  mt-[6px]">
-          <GroupTitle strText="Manage" />
+        <div className="flex flex-col gap-1.5 px-1 text-color-text-low-emphasis border-solid border-t border-slate-100 pt-2">
+          <GroupTitle strText="Academic Activity" />
           <LinkOption
-            strText="Posts & Activity"
-            handleClick={handleNotAvailableClick}
+            strText="My Doubts & Posts"
+            handleClick={() => {
+              if (objLoggedUser.strUserId) {
+                objNavigate(`/profile/${objLoggedUser.strUserId}`);
+                handleCloseEvent();
+              }
+            }}
           />
           <LinkOption
-            strText="Jobs Posting Account"
-            handleClick={handleNotAvailableClick}
+            strText="Notifications & Notices"
+            handleClick={() => {
+              objNavigate("/notifications");
+              handleCloseEvent();
+            }}
           />
         </div>
-        <div className="text-color-text-low-emphasis border-solid border-t  mt-[7px] flex items-center h-full">
-          <LinkOption
-            //TODO:finish the Sign Out process
-            strText="Sign Out"
-            handleClick={handleLogOut}
-          />
+        <div className="text-color-text-low-emphasis border-solid border-t border-slate-100 pt-2 flex items-center">
+          <LinkOption strText="Sign Out" handleClick={handleLogOut} />
         </div>
       </div>
     </div>

@@ -51,10 +51,16 @@ const startServer = async () => {
     // Create HTTP server
     const server = createServer(app);
 
+    const allowedSocketOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
+
     // Initialize Socket.io with connection limits and timeouts
     const io = new Server(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        origin: allowedSocketOrigins,
         credentials: true,
         methods: ['GET', 'POST']
       },
@@ -138,7 +144,7 @@ const startServer = async () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   🚀 LinkedIn Clone API Server                           ║
+║   🚀 DBUU Student Connect API Server                     ║
 ║                                                           ║
 ║   ✅ Server running on port ${PORT}                        ║
 ║   ✅ Environment: ${process.env.NODE_ENV || 'development'}                      ║

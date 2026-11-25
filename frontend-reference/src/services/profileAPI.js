@@ -17,6 +17,7 @@
  */
 
 import apiClient from "./apiClient";
+import { normalizeCampusMeta, resolveAvatarUrl } from "../utilities/CampusRoleUtils";
 
 /**
  * Get user profile by ID
@@ -51,6 +52,7 @@ export const getUserProfile = async (userId) => {
     
     // Backend returns { success: true, user: {...} }
     const user = response.user || response.data || response;
+    const campus = normalizeCampusMeta(user);
     
     // Transform to frontend format
     return {
@@ -58,11 +60,19 @@ export const getUserProfile = async (userId) => {
       name: user.fullName || user.name || "",
       email: user.email || "",
       headline: user.profile?.headline || user.headline || "",
-      avatarUrl: user.profilePicURL || user.avatarUrl || "",
+      avatarUrl: resolveAvatarUrl(user.profilePicURL || user.avatarUrl),
       bannerUrl: user.profile?.bannerUrl || user.profile?.backgroundPicURL || user.bannerUrl || "",
       location: user.profile?.location || user.location || "",
       bio: user.profile?.about || user.bio || "",
       website: user.profile?.website || user.website || "",
+      role: campus.role,
+      department: campus.department,
+      academicYear: campus.academicYear,
+      rollNumber: campus.rollNumber,
+      graduationYear: campus.graduationYear,
+      currentPosition: campus.currentPosition,
+      doubtsAsked: campus.doubtsAsked,
+      doubtsResolved: campus.doubtsResolved,
       
       // Counts
       followersCount: user.followersCount || 0,

@@ -1,6 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-import { Post, User, Profile } from "../../../../../../models";
 import PostEntry from "./components/PostEntry/PostEntry";
+
+/** @typedef {import("../../../../../../models/User").User} User */
+/** @typedef {import("../../../../../../models/Profile").Profile} Profile */
+/** @typedef {import("../../../../../../models/Post").Post} Post */
 
 /**
  *

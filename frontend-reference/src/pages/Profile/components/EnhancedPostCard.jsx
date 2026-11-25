@@ -23,6 +23,8 @@ import { toast } from "react-toastify";
 import { useReaction } from "../../../hooks/useReaction";
 import { connectionAPI } from "../../../services";
 import { showNotAvailableToast } from "../../../utilities";
+import { getAuthToken, getStoredUserObj } from "../../../utilities/authStorage";
+import { resolveAvatarUrl } from "../../../utilities/CampusRoleUtils";
 
 // Components
 import { ReactionButton, ReactionPicker, DeleteModal } from "../../../components";
@@ -35,22 +37,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api
 export default function EnhancedPostCard({ post, index, onPostDeleted }) {
   const navigate = useNavigate();
   
-  // Get current user from localStorage with better error handling
-  const getCurrentUser = () => {
-    try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr || userStr === "null" || userStr === "undefined") {
-        return null;
-      }
-      const user = JSON.parse(userStr);
-      return user;
-    } catch (error) {
-      console.error("Error parsing user from localStorage:", error);
-      return null;
-    }
-  };
-  
-  const currentUser = getCurrentUser();
+  // Get current user from per-tab storage
+  const currentUser = getStoredUserObj();
   const currentUserId = currentUser?._id || currentUser?.strUserId;
   
   // Get author from either 'author' or 'user' field (backend inconsistency)
@@ -196,7 +184,7 @@ export default function EnhancedPostCard({ post, index, onPostDeleted }) {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(
         `${API_BASE_URL}/posts/${post._id || post.strPostId}`,
         {
@@ -237,7 +225,7 @@ export default function EnhancedPostCard({ post, index, onPostDeleted }) {
     setIsDeleting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(
         `${API_BASE_URL}/posts/${post._id || post.strPostId}`,
         {
@@ -373,12 +361,9 @@ export default function EnhancedPostCard({ post, index, onPostDeleted }) {
             whileTap={{ scale: 0.95 }}
           >
             <img
-              src={
-                postAuthor?.profilePicURL ||
-                postAuthor?.avatarUrl ||
-                "https://ui-avatars.com/api/?name=" +
-                  encodeURIComponent(postAuthor?.name || postAuthor?.fullName || "User")
-              }
+              src={resolveAvatarUrl(
+                postAuthor?.profilePicURL || postAuthor?.avatarUrl
+              )}
               alt={`${postAuthor?.name || postAuthor?.fullName || "User"}'s avatar`}
               className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
             />

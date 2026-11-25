@@ -23,7 +23,13 @@ export const register = asyncHandler(async (req, res) => {
     lastName, 
     headline, 
     countryLoc, 
-    postalCodeLoc, 
+    postalCodeLoc,
+    role,
+    department,
+    academicYear,
+    rollNumber,
+    graduationYear,
+    currentPosition,
     authMethod = 'email-password' 
   } = req.body;
 
@@ -66,13 +72,29 @@ export const register = asyncHandler(async (req, res) => {
     profilePicURL = uploadResult.url;
   }
 
+  // Normalize campus cohort fields
+  const normalizedRole = ['student', 'passout', 'mentor'].includes(role) ? role : 'student';
+  const normalizedYear =
+    academicYear ||
+    (normalizedRole === 'mentor'
+      ? 'Faculty'
+      : normalizedRole === 'passout'
+      ? 'Alumni'
+      : '3rd Year');
+
   // Create user
   const user = await User.create({
-    email,
+    email: email.trim().toLowerCase(),
     password,
     fullName,
     authMethod,
     profilePicURL,
+    role: normalizedRole,
+    department: department || 'SoEC - Computer Science & Engineering',
+    academicYear: normalizedYear,
+    rollNumber: rollNumber || '',
+    graduationYear: graduationYear ? Number(graduationYear) : null,
+    currentPosition: currentPosition || '',
     profile: {
       firstName: userFirstName,
       lastName: userLastName,
@@ -103,7 +125,8 @@ export const register = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const email = (req.body.email || '').trim().toLowerCase();
+  const { password } = req.body;
 
   // Find user by email (include password field)
   const user = await User.findOne({ email }).select('+password');

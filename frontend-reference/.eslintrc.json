@@ -14,6 +14,11 @@
     "sourceType": "module"
   },
   "plugins": ["react"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "rules": {
     "no-console": "off",
     //"prefer-template": "off",

@@ -70,7 +70,7 @@ export const sendEmail = async ({ to, subject, html, text }) => {
   }
 
   const mailOptions = {
-    from: `"${process.env.EMAIL_FROM_NAME || 'LinkedIn Clone'}" <${process.env.EMAIL_USER}>`,
+    from: `"${process.env.EMAIL_FROM_NAME || 'DBUU Student Connect'}" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,
@@ -107,7 +107,7 @@ const stripHtml = (html) => {
  * @returns {Promise<Object>}
  */
 export const sendPasswordResetEmail = async (email, resetUrl, userName = 'User') => {
-  const subject = 'Reset Your Password - LinkedIn Clone';
+  const subject = 'Reset Your Password - DBUU Student Connect';
   
   const html = `
     <!DOCTYPE html>
@@ -253,7 +253,7 @@ export const sendPasswordResetEmail = async (email, resetUrl, userName = 'User')
       <div class="email-container">
         <!-- Header -->
         <div class="header">
-          <div class="logo">🔗 LinkedIn Clone</div>
+          <div class="logo">🔗 DBUU Student Connect</div>
           <div class="header-subtitle">Professional Network</div>
         </div>
 
@@ -295,12 +295,12 @@ export const sendPasswordResetEmail = async (email, resetUrl, userName = 'User')
         <!-- Footer -->
         <div class="footer">
           <div class="footer-text">
-            This is an automated message from LinkedIn Clone.<br>
+            This is an automated message from DBUU Student Connect.<br>
             Please do not reply to this email.
           </div>
           
           <div class="footer-text">
-            © ${new Date().getFullYear()} LinkedIn Clone. All rights reserved.
+            © ${new Date().getFullYear()} DBUU Student Connect. All rights reserved.
           </div>
 
           <div class="social-links">
@@ -319,7 +319,7 @@ export const sendPasswordResetEmail = async (email, resetUrl, userName = 'User')
   const text = `
     Hi ${userName},
 
-    We received a request to reset your password for LinkedIn Clone.
+    We received a request to reset your password for DBUU Student Connect.
 
     Reset your password by clicking this link:
     ${resetUrl}
@@ -329,7 +329,7 @@ export const sendPasswordResetEmail = async (email, resetUrl, userName = 'User')
     If you didn't request this password reset, please ignore this email.
 
     Thanks,
-    LinkedIn Clone Team
+    DBUU Student Connect Team
   `;
 
   return await sendEmail({ to: email, subject, html, text });
@@ -342,7 +342,7 @@ export const sendPasswordResetEmail = async (email, resetUrl, userName = 'User')
  * @returns {Promise<Object>}
  */
 export const sendWelcomeEmail = async (email, userName) => {
-  const subject = 'Welcome to LinkedIn Clone! 🎉';
+  const subject = 'Welcome to DBUU Student Connect! 🎉';
   
   const html = `
     <!DOCTYPE html>
@@ -350,7 +350,7 @@ export const sendWelcomeEmail = async (email, userName) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Welcome to LinkedIn Clone</title>
+      <title>Welcome to DBUU Student Connect</title>
       <style>
         body {
           margin: 0;
@@ -405,10 +405,10 @@ export const sendWelcomeEmail = async (email, userName) => {
     <body>
       <div class="email-container">
         <div class="header">
-          <div class="logo">🔗 LinkedIn Clone</div>
+          <div class="logo">🔗 DBUU Student Connect</div>
         </div>
         <div class="content">
-          <div class="welcome-title">Welcome to LinkedIn Clone, ${userName}! 🎉</div>
+          <div class="welcome-title">Welcome to DBUU Student Connect, ${userName}! 🎉</div>
           <div class="message">
             Thank you for joining our professional network. We're excited to have you on board!
           </div>
@@ -417,7 +417,7 @@ export const sendWelcomeEmail = async (email, userName) => {
           </div>
         </div>
         <div class="footer">
-          © ${new Date().getFullYear()} LinkedIn Clone. All rights reserved.
+          © ${new Date().getFullYear()} DBUU Student Connect. All rights reserved.
         </div>
       </div>
     </body>

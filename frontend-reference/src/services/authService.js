@@ -4,6 +4,16 @@
  */
 
 import apiClient from "./apiClient";
+import {
+  clearAuthStorage,
+  getAuthToken,
+  getRefreshToken,
+  getStoredUserObj,
+  notifyAuthChanged,
+  setAuthSession,
+  setAuthToken,
+  setStoredUser,
+} from "../utilities/authStorage";
 
 /**
  * Register a new user with email and password
@@ -36,10 +46,12 @@ export const registerUser = async (email, password, fullName, additionalData = {
       },
     });
 
-    // Store tokens and user in localStorage
-    localStorage.setItem("token", response.token);
-    localStorage.setItem("refreshToken", response.refreshToken);
-    localStorage.setItem("user", JSON.stringify(response.user));
+    // Store per-tab tokens and user
+    setAuthSession({
+      token: response.token,
+      refreshToken: response.refreshToken,
+      user: response.user,
+    });
 
     return { user: response.user, token: response.token };
   } else {
@@ -51,10 +63,11 @@ export const registerUser = async (email, password, fullName, additionalData = {
       ...additionalData,
     });
 
-    // Store tokens and user in localStorage
-    localStorage.setItem("token", response.token);
-    localStorage.setItem("refreshToken", response.refreshToken);
-    localStorage.setItem("user", JSON.stringify(response.user));
+    setAuthSession({
+      token: response.token,
+      refreshToken: response.refreshToken,
+      user: response.user,
+    });
 
     return { user: response.user, token: response.token };
   }
@@ -72,10 +85,11 @@ export const loginUser = async (email, password) => {
     password,
   });
 
-  // Store tokens and user in localStorage
-  localStorage.setItem("token", response.token);
-  localStorage.setItem("refreshToken", response.refreshToken);
-  localStorage.setItem("user", JSON.stringify(response.user));
+  setAuthSession({
+    token: response.token,
+    refreshToken: response.refreshToken,
+    user: response.user,
+  });
 
   return { user: response.user, token: response.token };
 };
@@ -93,10 +107,11 @@ export const googleSignIn = async (googleUser) => {
     profilePicURL: googleUser.photoURL || googleUser.picture,
   });
 
-  // Store tokens and user in localStorage
-  localStorage.setItem("token", response.token);
-  localStorage.setItem("refreshToken", response.refreshToken);
-  localStorage.setItem("user", JSON.stringify(response.user));
+  setAuthSession({
+    token: response.token,
+    refreshToken: response.refreshToken,
+    user: response.user,
+  });
 
   return { user: response.user, token: response.token };
 };
@@ -108,9 +123,9 @@ export const googleSignIn = async (googleUser) => {
 export const getCurrentUser = async () => {
   const response = await apiClient.get("/auth/me");
   
-  // Update user in localStorage
   if (response && response.user) {
-    localStorage.setItem("user", JSON.stringify(response));
+    setStoredUser(response.user);
+    notifyAuthChanged();
   }
   
   return response;
@@ -124,13 +139,10 @@ export const logoutUser = async () => {
   try {
     await apiClient.post("/auth/logout");
   } catch (error) {
-    // Even if API call fails, clear local storage
+    // Even if API call fails, clear per-tab storage
     console.error("Logout error:", error);
   } finally {
-    // Clear all auth data from localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+    clearAuthStorage();
   }
 };
 
@@ -139,26 +151,17 @@ export const logoutUser = async () => {
  * @returns {boolean} True if user is logged in
  */
 export const isAuthenticated = () => {
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
+  const token = getAuthToken();
+  const user = getStoredUserObj();
   return !!(token && user);
 };
 
 /**
- * Get stored user from localStorage
+ * Get stored user from per-tab storage
  * @returns {Object|null} User object or null
  */
 export const getStoredUser = () => {
-  const userStr = localStorage.getItem("user");
-  if (userStr) {
-    try {
-      return JSON.parse(userStr);
-    } catch (error) {
-      console.error("Error parsing stored user:", error);
-      return null;
-    }
-  }
-  return null;
+  return getStoredUserObj();
 };
 
 /**
@@ -166,7 +169,7 @@ export const getStoredUser = () => {
  * @returns {Promise<string>} New access token
  */
 export const refreshAccessToken = async () => {
-  const refreshToken = localStorage.getItem("refreshToken");
+  const refreshToken = getRefreshToken();
   
   if (!refreshToken) {
     throw new Error("No refresh token available");
@@ -174,8 +177,7 @@ export const refreshAccessToken = async () => {
 
   const response = await apiClient.post("/auth/refresh", { refreshToken });
   
-  // Update token in localStorage
-  localStorage.setItem("token", response.token);
+  setAuthToken(response.token);
   
   return response.token;
 };
@@ -204,11 +206,13 @@ export const resetPassword = async (token, newPassword) => {
     newPassword,
   });
 
-  // Store tokens and user in localStorage (auto-login)
+  // Store per-tab tokens and user (auto-login)
   if (data.token && data.user) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    setAuthSession({
+      token: data.token,
+      refreshToken: data.refreshToken,
+      user: data.user,
+    });
   }
 
   return { user: data.user, token: data.token };

@@ -31,6 +31,15 @@ import ImageCropperModal from "./ImageCropperModal";
 
 // Import user context
 import { useUser } from "../../contexts/UserContext";
+import { getAuthToken, getStoredUserObj } from "../../utilities/authStorage";
+import { resolveAvatarUrl } from "../../utilities/CampusRoleUtils";
+import {
+  DBUU_ACADEMIC_YEARS,
+  DBUU_DEPARTMENTS,
+  DBUU_ROLES,
+  normalizeCampusMeta,
+  saveCampusMetaLocal,
+} from "../../utilities/CampusRoleUtils";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
@@ -44,6 +53,12 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
     headline: "",
     location: "",
     about: "",
+    role: DBUU_ROLES.STUDENT,
+    department: DBUU_DEPARTMENTS[0],
+    academicYear: DBUU_ACADEMIC_YEARS[2],
+    rollNumber: "",
+    graduationYear: "",
+    currentPosition: "",
     experience: [],
     education: [],
     skills: [],
@@ -68,18 +83,14 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
       // Also check localStorage for the absolute freshest data
       let latestUser = currentUser || user;
       
-      // Double-check localStorage for updates (in case context hasn't synced)
+      // Double-check per-tab sessionStorage for updates (in case context hasn't synced)
       try {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          // Use localStorage data if it exists and has a matching ID
-          if (parsedUser && parsedUser._id === (user?._id || currentUser?._id)) {
-            latestUser = parsedUser;
-          }
+        const parsedUser = getStoredUserObj();
+        if (parsedUser && parsedUser._id === (user?._id || currentUser?._id)) {
+          latestUser = parsedUser;
         }
       } catch (error) {
-        console.warn("Failed to parse user from localStorage:", error);
+        console.warn("Failed to parse stored user:", error);
       }
       
       if (latestUser) {
@@ -92,6 +103,8 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
           skillsCount: latestUser.profile?.skills?.length || 0,
         });
         
+        const campusMeta = normalizeCampusMeta(latestUser);
+
         // Reset all form data with latest values
         setFormData({
           fullName: latestUser.fullName || latestUser.name || "",
@@ -100,6 +113,12 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
           headline: latestUser.profile?.headline || "",
           location: latestUser.profile?.location || "",
           about: latestUser.profile?.about || "",
+          role: campusMeta.role,
+          department: campusMeta.department,
+          academicYear: campusMeta.academicYear,
+          rollNumber: campusMeta.rollNumber,
+          graduationYear: campusMeta.graduationYear ? String(campusMeta.graduationYear) : "",
+          currentPosition: campusMeta.currentPosition,
           experience: latestUser.profile?.experience || [],
           education: latestUser.profile?.education || [],
           skills: latestUser.profile?.skills || [],
@@ -217,7 +236,7 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
       setSaving(true);
 
       // Get auth token
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const config = {
         headers: {
           "Content-Type": "application/json",
@@ -228,6 +247,12 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
       // Prepare update payload - only send non-empty values
       const updatePayload = {
         fullName: formData.fullName,
+        role: formData.role,
+        department: formData.department,
+        academicYear: formData.academicYear,
+        rollNumber: formData.rollNumber,
+        graduationYear: formData.graduationYear ? Number(formData.graduationYear) : null,
+        currentPosition: formData.currentPosition,
         profile: {},
       };
 
@@ -276,9 +301,17 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
         config
       );
 
+      saveCampusMetaLocal(user._id, user.email, formData);
+
       // Build complete updated user object
       const updatedUserData = {
         ...profileResponse.data.user,
+        role: formData.role,
+        department: formData.department,
+        academicYear: formData.academicYear,
+        rollNumber: formData.rollNumber,
+        graduationYear: formData.graduationYear ? Number(formData.graduationYear) : null,
+        currentPosition: formData.currentPosition,
         profile: {
           ...profileResponse.data.user.profile,
           experience: experienceResponse.data.experience || formData.experience,
@@ -426,8 +459,131 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
                   value={formData.fullName}
                   onChange={handleChange}
                   className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="John Doe"
+                  placeholder="Aarav Sharma"
                 />
+              </div>
+
+              {/* DBUU Campus Identity Fields */}
+              <div className="p-4 rounded-xl bg-[#FFF9F3] border border-orange-200 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#172B52]">
+                  DBUU Academic & Role Details
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Campus Cohort Role
+                    </label>
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                    >
+                      <option value={DBUU_ROLES.STUDENT}>DBUU Student</option>
+                      <option value={DBUU_ROLES.PASSOUT}>Alumni / Pass-out</option>
+                      <option value={DBUU_ROLES.MENTOR}>Faculty Mentor</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Department / School
+                    </label>
+                    <select
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                    >
+                      {DBUU_DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {formData.role === DBUU_ROLES.STUDENT && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Academic Year
+                      </label>
+                      <select
+                        name="academicYear"
+                        value={formData.academicYear}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                      >
+                        {DBUU_ACADEMIC_YEARS.map((yr) => (
+                          <option key={yr} value={yr}>
+                            {yr}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        University Roll / Enrollment No.
+                      </label>
+                      <input
+                        type="text"
+                        name="rollNumber"
+                        value={formData.rollNumber}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                        placeholder="23BTCS041"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {formData.role === DBUU_ROLES.PASSOUT && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Pass-out Year
+                      </label>
+                      <input
+                        type="number"
+                        name="graduationYear"
+                        value={formData.graduationYear}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                        placeholder="2024"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Current Organization / Role
+                      </label>
+                      <input
+                        type="text"
+                        name="currentPosition"
+                        value={formData.currentPosition}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                        placeholder="SDE-1 at Infosys"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {formData.role === DBUU_ROLES.MENTOR && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Faculty Designation
+                    </label>
+                    <input
+                      type="text"
+                      name="currentPosition"
+                      value={formData.currentPosition}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900"
+                      placeholder="Assistant Professor, SoEC"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -494,7 +650,7 @@ export default function ProfileEditModal({ user, isOpen, onClose, onSave }) {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <img
-                      src={profileImagePreview || "https://ui-avatars.com/api/?name=" + encodeURIComponent(formData.fullName)}
+                      src={resolveAvatarUrl(profileImagePreview)}
                       alt="Profile preview"
                       className="w-24 h-24 rounded-full object-cover ring-2 ring-gray-200"
                     />

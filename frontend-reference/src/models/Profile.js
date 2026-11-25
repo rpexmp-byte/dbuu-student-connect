@@ -23,6 +23,12 @@
  * @property {Date} dtCreatedOn
  * @property {boolean} booActive
  * @property {string} strUserId
+ * @property {("student"|"passout"|"mentor")} [strRole]
+ * @property {string} [strDepartment]
+ * @property {string} [strAcademicYear]
+ * @property {string} [strRollNumber]
+ * @property {number|null} [intGraduationYear]
+ * @property {string} [strCurrentPosition]
  */
 
 /**
@@ -36,6 +42,7 @@
  * @param {Date} dtCreatedOn
  * @param {boolean} booActive
  * @param {string} strUserOwnerId
+ * @param {Object} [objCampusMeta]
  * @returns {Profile}
  */
 function shapeProfile(
@@ -48,7 +55,8 @@ function shapeProfile(
   strBgPicPath,
   dtCreatedOn,
   booActive,
-  strUserOwnerId
+  strUserOwnerId,
+  objCampusMeta = {}
 ) {
   return {
     strProfileId,
@@ -61,6 +69,13 @@ function shapeProfile(
     dtCreatedOn,
     booActive,
     strUserId: strUserOwnerId,
+    strRole: objCampusMeta.strRole || "student",
+    strDepartment:
+      objCampusMeta.strDepartment || "SoEC - Computer Science & Engineering",
+    strAcademicYear: objCampusMeta.strAcademicYear || "3rd Year",
+    strRollNumber: objCampusMeta.strRollNumber || "",
+    intGraduationYear: objCampusMeta.intGraduationYear ?? null,
+    strCurrentPosition: objCampusMeta.strCurrentPosition || "",
   };
 }
 

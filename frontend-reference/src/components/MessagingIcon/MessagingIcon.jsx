@@ -10,7 +10,7 @@ import { useSocket } from "../../contexts/SocketContext";
 import { messageAPI } from "../../services";
 import { NavigationPaths } from "../../utilities";
 
-export function MessagingIcon() {
+export function MessagingIcon({ darkBg = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { socket } = useSocket();
@@ -92,12 +92,16 @@ export function MessagingIcon() {
       type="button"
       onClick={handleClick}
       className={`
-        relative flex items-center flex-row sm:flex-col gap-1.5 sm:gap-0 
-        h-[52px] w-fit sm:w-[80px] sm:min-w-[80px] justify-center 
+        relative flex items-center flex-row sm:flex-col gap-1.5 sm:gap-0.5 
+        h-[56px] w-fit sm:min-w-[96px] px-2 justify-center 
         sm:border-solid sm:border-b-2 
-        ${isOnMessagingPage 
-          ? "text-black sm:border-b-black" 
-          : "text-color-text-low-emphasis hover:text-black sm:border-b-transparent hover:sm:border-b-color-text-low-emphasis"
+        ${darkBg
+          ? isOnMessagingPage
+            ? "text-[#F58220] sm:border-b-[#F58220]"
+            : "text-slate-300 hover:text-white sm:border-b-transparent"
+          : isOnMessagingPage 
+            ? "text-black sm:border-b-black" 
+            : "text-color-text-low-emphasis hover:text-black sm:border-b-transparent hover:sm:border-b-color-text-low-emphasis"
         }
         transition-colors duration-200
       `}
@@ -140,7 +144,7 @@ export function MessagingIcon() {
 
       {/* Text Label */}
       <span className="flex items-center text-sm font-bold sm:font-normal break-all leading-[18px]">
-        Messaging
+        Direct Messages
       </span>
     </button>
   );

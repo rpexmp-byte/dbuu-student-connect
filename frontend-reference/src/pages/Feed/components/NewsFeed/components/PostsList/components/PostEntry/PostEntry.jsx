@@ -1,20 +1,29 @@
-// eslint-disable-next-line no-unused-vars
-import { Post, User, Profile } from "../../../../../../../../models";
 import formatDistanceToNow from "date-fns/formatDistanceToNow";
 import {
   MediaQueries,
-  showNotAvailableToast,
+  getAuthToken,
+  resolveAvatarUrl,
+  showCustomTextToast,
 } from "../../../../../../../../utilities";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import InteractionCounter from "./components/InteractionCounter";
 import CommentsList from "./components/CommentsList/CommentsList";
 import PostActionButton from "./components/PostActionButton";
-import { ReactionButton, ReactionPicker, DeleteModal } from "../../../../../../../../components";
+import {
+  ReactionButton,
+  ReactionPicker,
+  DeleteModal,
+  RoleBadge,
+} from "../../../../../../../../components";
 import { useReaction } from "../../../../../../../../hooks/useReaction";
 import { formatReactionCounts } from "../../../../../../../../constants/reactions";
 import HashtagText from "../../../../../../../../components/HashtagText";
 import { connectionAPI } from "../../../../../../../../services";
+
+/** @typedef {import("../../../../../../../../models/User").User} User */
+/** @typedef {import("../../../../../../../../models/Profile").Profile} Profile */
+/** @typedef {import("../../../../../../../../models/Post").Post} Post */
 
 // API Base URL from environment variable
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
@@ -115,9 +124,7 @@ export default function PostEntry({
 
   // Handler for hashtag clicks
   const handleHashtagClick = (hashtag) => {
-    // TODO: Navigate to hashtag feed page
-    console.log("View hashtag:", hashtag);
-    showNotAvailableToast(); // Temporary until hashtag feed is implemented
+    showCustomTextToast(`Topic #${hashtag} — hashtag feed filtering queued for Phase 2.`, 2);
   };
 
   // Handler for editing post
@@ -131,7 +138,7 @@ export default function PostEntry({
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(
         `${API_BASE_URL}/posts/${objPost.strPostId}`,
         {
@@ -175,7 +182,7 @@ export default function PostEntry({
     setIsDeleting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(
         `${API_BASE_URL}/posts/${objPost.strPostId}`,
         {
@@ -225,7 +232,7 @@ export default function PostEntry({
     }
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(
         `${API_BASE_URL}/posts/${objPost.strPostId}/comments/${commentId}`,
         {
@@ -296,27 +303,36 @@ export default function PostEntry({
           onClick={() => navigate(`/profile/${objPost.strUserId}`)}
           className="flex gap-2 hover:opacity-80 transition-opacity"
         >
-          <div className=" w-12 min-h-full flex items-end">
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-[#E2E8F0] flex-shrink-0">
             <img
               loading="lazy"
               referrerPolicy="no-referrer"
-              className="w-12 h-auto rounded-full"
-              src={objCreatorProfile.strProfilePicURL}
+              className="w-full h-full object-cover"
+              src={resolveAvatarUrl(objCreatorProfile.strProfilePicURL)}
               alt={
                 objCreatorProfile.objIntro.strFirstName +
                 " " +
                 objCreatorProfile.objIntro.strLastName
               }
+              onError={(e) => {
+                e.currentTarget.src = "/student_avatar.jpg";
+              }}
             />
           </div>
-          <div className="flex flex-col">
-            <div className="flex gap-1">
-              <p className="text-color-text-darker capitalize font-bold text-base leading-5">
+          <div className="flex flex-col text-left">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-[#0F172A] capitalize font-bold text-base leading-5">
                 {objCreatorProfile.objIntro.strFirstName +
                   " " +
                   objCreatorProfile.objIntro.strLastName}
               </p>
-              <p className=" text-color-text">
+              <RoleBadge
+                role={objCreatorProfile.strRole || "student"}
+                academicYear={objCreatorProfile.strAcademicYear || ""}
+                graduationYear={objCreatorProfile.intGraduationYear || null}
+                compact
+              />
+              <p className="text-color-text text-xs">
                 {"• " +
                   (objLoggedUser.strUserId === objPost.strUserId
                     ? "You"
@@ -327,8 +343,8 @@ export default function PostEntry({
                     : "3rd")}
               </p>
             </div>
-            <p className="text-color-text text-sm leading-4">
-              {objCreatorProfile.objIntro.strHeadline}
+            <p className="text-[#64748B] text-xs leading-4 mt-0.5">
+              {objCreatorProfile.strDepartment || objCreatorProfile.objIntro.strHeadline}
             </p>
             <div className="flex gap-1 items-center text-color-text">
               <p className=" text-sm">
@@ -499,11 +515,14 @@ export default function PostEntry({
           strType="Comment"
           handleClick={() => setShowComments(!showComments)}
         />
-        <PostActionButton strType="Share" handleClick={showNotAvailableToast} />
+        <PostActionButton
+          strType="Share"
+          handleClick={() => showCustomTextToast("Campus post sharing is queued for Phase 2.", 2.5)}
+        />
         {MediaQueries.minWidth640px.matches ? (
           <PostActionButton
             strType="Send"
-            handleClick={showNotAvailableToast}
+            handleClick={() => showCustomTextToast("Use Messages in the top bar to share with peers.", 2.5)}
           />
         ) : null}
       </div>

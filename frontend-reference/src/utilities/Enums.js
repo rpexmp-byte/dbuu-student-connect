@@ -51,7 +51,7 @@ const CollectionNames = Object.freeze({
 
 const NavigationPaths = Object.freeze({
   UNKNOWN: "*",
-  BASE: "/linkedin",
+  BASE: "",
   FEED: "feed",
   MESSAGING: "messaging",
 });

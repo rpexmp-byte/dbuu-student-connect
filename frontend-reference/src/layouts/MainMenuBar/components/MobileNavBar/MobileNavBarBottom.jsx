@@ -1,11 +1,11 @@
-// eslint-disable-next-line no-unused-vars
-import { User } from "../../../../models";
 import { ButtonImageText } from "../../../../components/form-controls";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NavigationPaths, showNotAvailableToast } from "../../../../utilities";
 import NotificationBell from "../../../../components/NotificationBell";
 import { MessagingIcon } from "../../../../components/MessagingIcon";
 import { usePostModal } from "../../../../contexts/PostModalContext";
+
+/** @typedef {import("../../../../models/User").User} User */
 
 /**
  *

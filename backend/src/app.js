@@ -41,10 +41,10 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       'http://localhost:3000',
+      'http://127.0.0.1:3000',
       'http://localhost:5173',
       process.env.FRONTEND_URL,
       'https://linkedin-clone-z5u0.onrender.com',
-      '*' 
     ].filter(Boolean);
     
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -60,14 +60,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 /**
- * Rate Limiting
+ * Rate Limiting (bypassed for localhost/dev demos so presentation sessions are never throttled)
  */
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5000,
+  skip: (req) =>
+    process.env.NODE_ENV !== 'production' ||
+    ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.ip),
+  message: { success: false, message: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Apply rate limiter to all API routes
@@ -129,7 +132,7 @@ app.use('/api/messages', messageRoutes);
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'LinkedIn Clone API',
+    message: 'DBUU Student Connect API',
     version: '3.0.0',
     endpoints: {
       auth: '/api/auth',

@@ -95,8 +95,8 @@ export const getAllPosts = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate('user', 'fullName profilePicURL email profile.headline')
-    .populate('comments.user', 'fullName profilePicURL')
+    .populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition')
+    .populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear')
     .lean();
 
   // Add currentUserReaction field for each post
@@ -136,8 +136,8 @@ export const getPostById = asyncHandler(async (req, res) => {
   const userId = req.user?._id; // Optional user for personalization
   
   let post = await Post.findById(req.params.id)
-    .populate('user', 'fullName profilePicURL email profile.headline')
-    .populate('comments.user', 'fullName profilePicURL')
+    .populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition')
+    .populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear')
     .lean();
 
   if (!post) {
@@ -211,7 +211,7 @@ export const createPost = asyncHandler(async (req, res) => {
   });
 
   // Populate user data
-  await post.populate('user', 'fullName profilePicURL email profile.headline');
+  await post.populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition');
 
   res.status(201).json({
     success: true,
@@ -269,7 +269,7 @@ export const updatePost = asyncHandler(async (req, res) => {
   await post.save();
 
   // Populate user data
-  await post.populate('user', 'fullName profilePicURL email profile.headline');
+  await post.populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition');
 
   res.status(200).json({
     success: true,
@@ -367,7 +367,7 @@ export const toggleLike = asyncHandler(async (req, res) => {
   });
 
   // Populate user data
-  await post.populate('user', 'fullName profilePicURL email profile.headline');
+  await post.populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition');
 
   // Return canonical state with requestId for client-side reconciliation
   res.status(200).json({
@@ -513,8 +513,8 @@ export const addComment = asyncHandler(async (req, res) => {
   }
 
   // Populate user data
-  await post.populate('user', 'fullName profilePicURL email profile.headline');
-  await post.populate('comments.user', 'fullName profilePicURL');
+  await post.populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition');
+  await post.populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear');
 
   // Convert to plain object and enrich comments with reactions
   const postObj = post.toObject();
@@ -571,8 +571,8 @@ export const deleteComment = asyncHandler(async (req, res) => {
   }
 
   // Populate user data
-  await post.populate('user', 'fullName profilePicURL email profile.headline');
-  await post.populate('comments.user', 'fullName profilePicURL');
+  await post.populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition');
+  await post.populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear');
 
   // Convert to plain object and enrich comments with reactions
   const postObj = post.toObject();
@@ -632,8 +632,8 @@ export const updateComment = asyncHandler(async (req, res) => {
   await post.save();
 
   // Populate user data
-  await post.populate('user', 'fullName profilePicURL email profile.headline');
-  await post.populate('comments.user', 'fullName profilePicURL');
+  await post.populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition');
+  await post.populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear');
 
   // Convert to plain object and enrich comments with reactions
   const postObj = post.toObject();
@@ -679,8 +679,8 @@ export const getUserPosts = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate('user', 'fullName profilePicURL email profile.headline')
-    .populate('comments.user', 'fullName profilePicURL')
+    .populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition')
+    .populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear')
     .lean();
 
   // Add currentUserReaction field for each post
@@ -737,8 +737,8 @@ export const getPostsByHashtag = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate('user', 'fullName profilePicURL email profile.headline')
-    .populate('comments.user', 'fullName profilePicURL')
+    .populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition')
+    .populate('comments.user', 'fullName profilePicURL role department academicYear graduationYear')
     .lean();
 
   // Enrich comments with reaction data
@@ -1051,7 +1051,7 @@ export const getCommentReactionUsers = asyncHandler(async (req, res) => {
 
   // Get reactions with user details
   const reactions = await Reaction.find(query)
-    .populate('user', 'fullName profilePicURL email profile.headline')
+    .populate('user', 'fullName profilePicURL email profile.headline role department academicYear rollNumber graduationYear currentPosition')
     .sort({ createdAt: -1 })
     .limit(parseInt(limit))
     .skip((parseInt(page) - 1) * parseInt(limit));

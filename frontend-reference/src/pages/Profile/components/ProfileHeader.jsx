@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import ConnectionButton from "../../../components/ConnectionButton/ConnectionButton";
 import { ProfileEditModal } from "../../../components/ProfileEditModal";
+import { RoleBadge } from "../../../components";
+import { resolveAvatarUrl } from "../../../utilities";
 
 export default function ProfileHeader({
   profile,
@@ -94,8 +96,8 @@ export default function ProfileHeader({
       role="region"
       aria-label="Profile header"
     >
-      {/* BANNER IMAGE - Full width, responsive height with safe area */}
-      <div className="relative w-full h-32 sm:h-40 md:h-48 lg:h-52 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 overflow-hidden rounded-t-2xl">
+      {/* BANNER IMAGE - DBUU Navy gradient with safe area */}
+      <div className="relative w-full h-32 sm:h-40 md:h-48 lg:h-52 bg-gradient-to-r from-[#172B52] via-[#1E3A6B] to-[#0D1A33] overflow-hidden rounded-t-2xl">
         {/* Background pattern for visual interest */}
         <div
           className="absolute inset-0 opacity-20"
@@ -116,15 +118,15 @@ export default function ProfileHeader({
         )}
 
         {/* Safe area overlay for important content positioning */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/15" />
       </div>
 
       {/* CONTENT CONTAINER - Padding for avatar overlap */}
       <div className="relative px-6 pb-6">
         
-        {/* AVATAR - Positioned to overlap banner by 30-40px */}
+        {/* AVATAR - Positioned to overlap banner safely outside overflow-hidden */}
         <motion.div
-          className="relative -mt-16 sm:-mt-20 mb-4"
+          className="relative z-10 -mt-16 sm:-mt-20 mb-4"
           variants={avatarVariants}
           initial="hidden"
           animate="visible"
@@ -133,16 +135,19 @@ export default function ProfileHeader({
             {/* Avatar with ring and hover effect */}
             <motion.button
               onClick={() => navigate(`/profile/${profile._id}`)}
-              className="block rounded-full ring-4 ring-white bg-white overflow-hidden focus:outline-none focus:ring-4 focus:ring-color-button-blue transition-shadow"
+              className="block rounded-full ring-4 ring-white border-2 border-[#F58220] bg-white overflow-hidden focus:outline-none focus:ring-4 focus:ring-[#F58220] transition-shadow"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
-              aria-label={`View ${profile.name}"s profile picture`}
+              aria-label={`View ${profile.name}'s profile picture`}
             >
               <img
-                src={profile.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(profile.name)}
-                alt={`${profile.name}"s avatar`}
+                src={resolveAvatarUrl(profile.avatarUrl)}
+                alt={`${profile.name}'s avatar`}
                 className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 object-cover"
                 loading="eager"
+                onError={(e) => {
+                  e.currentTarget.src = "/student_avatar.jpg";
+                }}
               />
             </motion.button>
           </div>
@@ -155,11 +160,16 @@ export default function ProfileHeader({
           animate="visible"
           className="mb-4"
         >
-          {/* Name with Connection Degree - Large, bold */}
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-color-text-darker">
+          {/* Name with RoleBadge and Connection Degree */}
+          <div className="flex flex-wrap items-center gap-2.5 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A]">
               {profile.name}
             </h1>
+            <RoleBadge
+              role={profile.role || "student"}
+              academicYear={profile.academicYear || "3rd Year"}
+              graduationYear={profile.graduationYear || null}
+            />
             {/* Connection Degree Badge - Only show for non-owners */}
             {!isOwner && profile.connectionDegree !== undefined && (
               <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
@@ -170,6 +180,27 @@ export default function ProfileHeader({
               </span>
             )}
           </div>
+
+          {(profile.department || profile.rollNumber) && (
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#172B52] mb-2">
+              {profile.department && (
+                <span className="inline-flex items-center gap-1 bg-[#FFF9F3] border border-orange-200 px-2.5 py-0.5 rounded-full">
+                  <i className="fas fa-building-columns text-[#F58220]" aria-hidden="true" />
+                  <span>{profile.department}</span>
+                </span>
+              )}
+              {profile.rollNumber && (
+                <span className="inline-flex items-center gap-1 bg-[#F1F5F9] px-2.5 py-0.5 rounded-full">
+                  <span>Enrollment: {profile.rollNumber}</span>
+                </span>
+              )}
+              {profile.currentPosition && (
+                <span className="inline-flex items-center gap-1 bg-slate-100 text-[#0F172A] px-2.5 py-0.5 rounded-full">
+                  <span>{profile.currentPosition}</span>
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Headline - Medium emphasis */}
           {profile.headline && (

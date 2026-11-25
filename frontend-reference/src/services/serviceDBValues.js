@@ -1,5 +1,6 @@
-// eslint-disable-next-line no-unused-vars
-import { shapeDBDefaultValues, DefaultDatabaseValues } from "../models";
+import { shapeDBDefaultValues } from "../models";
+
+/** @typedef {import("../models/DefaultValues").DefaultDatabaseValues} DefaultDatabaseValues */
 
 /**
  * @module ServiceDatabaseValues
@@ -15,8 +16,8 @@ const getDefaultValues = async () => {
     // Return hardcoded default values for REST API version
     // These match the backend defaults
     return shapeDBDefaultValues(
-      "https://res.cloudinary.com/demo/image/upload/default-avatar.png", // Default profile pic
-      "https://res.cloudinary.com/demo/image/upload/default-background.jpg" // Default background
+      "/student_avatar.jpg", // Default profile pic
+      "" // Default background
     );
   } catch (error) {
     console.error("serviceDBValues.getDefaultValues:", error);

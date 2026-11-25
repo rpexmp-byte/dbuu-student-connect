@@ -21,7 +21,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { toast } from "react-toastify";
 
 // Import components
 import ProfileHeader from "./ProfileHeader";
@@ -231,7 +230,7 @@ export default function UserProfile() {
               Go Back
             </button>
             <button
-              onClick={() => navigate("/linkedin/feed")}
+              onClick={() => navigate("/feed")}
               className="px-6 py-2 bg-color-button-blue text-white rounded-full hover:bg-color-button-blue-darker transition-colors"
             >
               Go to Feed
@@ -438,19 +437,23 @@ export default function UserProfile() {
                 </div>
               )}
 
-              {/* LinkedIn Learning Ad (Optional) */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm border border-blue-200 p-4">
+              {/* DBUU Campus Hub Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-orange-50 rounded-2xl shadow-sm border border-blue-200 p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <i className="fas fa-graduation-cap text-blue-600 text-lg" />
+                  <i className="fas fa-graduation-cap text-dbuu-navy text-lg" />
                   <h3 className="text-sm font-semibold text-color-text-darker">
-                    Learn new skills
+                    DBUU Campus Knowledge Hub
                   </h3>
                 </div>
                 <p className="text-xs text-color-text mb-3">
-                  Explore thousands of courses from industry experts
+                  Explore student projects, faculty mentorship &amp; campus updates
                 </p>
-                <button className="w-full py-2 bg-white text-color-button-blue font-semibold text-sm rounded-full hover:bg-gray-50 transition-colors">
-                  Try LinkedIn Learning
+                <button
+                  type="button"
+                  onClick={() => navigate("/feed")}
+                  className="w-full py-2 bg-white text-color-button-blue font-semibold text-sm rounded-full hover:bg-gray-50 transition-colors"
+                >
+                  Open Campus Feed
                 </button>
               </div>
             </motion.aside>

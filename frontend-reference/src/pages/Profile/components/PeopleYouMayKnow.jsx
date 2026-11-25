@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getSuggestedConnections } from "../../../services/connectionAPI";
 import ConnectionButton from "../../../components/ConnectionButton/ConnectionButton";
+import { resolveAvatarUrl } from "../../../utilities/CampusRoleUtils";
 
 /**
  * People You May Know Component
@@ -206,7 +207,7 @@ export default function PeopleYouMayKnow({
                   className="flex-shrink-0 cursor-pointer relative"
                 >
                   <img
-                    src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0A66C2&color=fff&size=128`}
+                    src={resolveAvatarUrl(user.avatarUrl)}
                     alt={user.name}
                     className="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
                   />
@@ -231,14 +232,14 @@ export default function PeopleYouMayKnow({
                   </motion.h4>
                   
                   <p className="text-xs text-color-text line-clamp-2 mb-2">
-                    {user.headline || "LinkedIn Member"}
+                    {user.headline || "DBUU Campus Member"}
                   </p>
 
                   {/* Mutual Connections */}
                   {user.mutualConnections > 0 && (
                     <div className="flex items-center gap-1 text-xs text-color-text-low-emphasis">
                       <i className="fas fa-user-friends text-[10px]" />
-                      <span>{user.mutualConnections} mutual connection{user.mutualConnections !== 1 ? 's' : ''}</span>
+                      <span>{user.mutualConnections} mutual connection{user.mutualConnections !== 1 ? "s" : ""}</span>
                     </div>
                   )}
 

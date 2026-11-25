@@ -5,11 +5,11 @@
  * reaction persistence across page refreshes.
  */
 
-import React, { useEffect } from 'react';
-import { useReactionContext } from '../contexts/ReactionContext';
-import axios from 'axios';
+import React, { useEffect } from "react";
+import { useReactionContext } from "../contexts/ReactionContext";
+import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 /**
  * Example Post Component
@@ -19,7 +19,7 @@ const ExamplePost = ({ post }) => {
   const { getReaction, updateReaction, initializeReaction } = useReactionContext();
   
   // Get current user
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = currentUser._id;
 
   // Initialize reaction state when post loads
@@ -60,7 +60,7 @@ const ExamplePost = ({ post }) => {
   // Handle reaction click
   const handleReact = async (reactionType) => {
     if (!userId) {
-      alert('Please login to react');
+      alert("Please login to react");
       return;
     }
 
@@ -69,11 +69,11 @@ const ExamplePost = ({ post }) => {
 
   // Render reaction buttons
   const reactions = [
-    { type: 'like', emoji: '👍', label: 'Like' },
-    { type: 'celebrate', emoji: '🎉', label: 'Celebrate' },
-    { type: 'support', emoji: '💪', label: 'Support' },
-    { type: 'love', emoji: '❤️', label: 'Love' },
-    { type: 'insightful', emoji: '💡', label: 'Insightful' },
+    { type: "like", emoji: "👍", label: "Like" },
+    { type: "celebrate", emoji: "🎉", label: "Celebrate" },
+    { type: "support", emoji: "💪", label: "Support" },
+    { type: "love", emoji: "❤️", label: "Love" },
+    { type: "insightful", emoji: "💡", label: "Insightful" },
   ];
 
   return (
@@ -92,7 +92,7 @@ const ExamplePost = ({ post }) => {
             <button
               key={type}
               onClick={() => handleReact(type)}
-              className={`reaction-btn ${isActive ? 'active' : ''}`}
+              className={`reaction-btn ${isActive ? "active" : ""}`}
               title={label}
             >
               <span className="emoji">{emoji}</span>
@@ -110,8 +110,8 @@ const ExamplePost = ({ post }) => {
       </div>
 
       {/* Debug Info (remove in production) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="debug-info" style={{ fontSize: '10px', color: '#666', marginTop: '10px' }}>
+      {process.env.NODE_ENV === "development" && (
+        <div className="debug-info" style={{ fontSize: "10px", color: "#666", marginTop: "10px" }}>
           <details>
             <summary>Debug: Reaction State</summary>
             <pre>{JSON.stringify(reactionState, null, 2)}</pre>
@@ -129,7 +129,7 @@ function calculateReactionCounts(reactions) {
   const counts = {};
   if (reactions && Array.isArray(reactions)) {
     reactions.forEach(reaction => {
-      const type = reaction.type || 'like';
+      const type = reaction.type || "like";
       counts[type] = (counts[type] || 0) + 1;
     });
   }
@@ -148,7 +148,7 @@ const ExampleFeedPage = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const response = await axios.get(`${API_URL}/posts`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -157,7 +157,7 @@ const ExampleFeedPage = () => {
           setPosts(response.data.posts);
         }
       } catch (error) {
-        console.error('Failed to fetch posts:', error);
+        console.error("Failed to fetch posts:", error);
       } finally {
         setLoading(false);
       }
@@ -182,12 +182,12 @@ const ExampleFeedPage = () => {
       <h1>Feed</h1>
       
       {/* Debug: Show loaded reactions */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="debug-panel" style={{ background: '#f0f0f0', padding: '10px', marginBottom: '20px' }}>
+      {process.env.NODE_ENV === "development" && (
+        <div className="debug-panel" style={{ background: "#f0f0f0", padding: "10px", marginBottom: "20px" }}>
           <strong>Loaded Reactions:</strong> {Object.keys(reactionCache).length}
           <details>
             <summary>View All</summary>
-            <pre style={{ fontSize: '10px' }}>
+            <pre style={{ fontSize: "10px" }}>
               {JSON.stringify(reactionCache, null, 2)}
             </pre>
           </details>

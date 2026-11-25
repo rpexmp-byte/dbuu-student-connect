@@ -15,6 +15,24 @@ import path from 'path';
  * @returns {Promise<Object>} - Upload result with URL
  */
 export const uploadToCloudinary = async (file, folder = 'linkedin-clone', options = {}) => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    if (Buffer.isBuffer(file)) {
+      return {
+        url: `data:image/jpeg;base64,${file.toString('base64')}`,
+        publicId: null,
+        format: 'base64',
+        width: null,
+        height: null,
+      };
+    }
+    return {
+      url: '/student_avatar.jpg',
+      publicId: null,
+      format: 'jpg',
+      width: null,
+      height: null,
+    };
+  }
   try {
     const uploadOptions = {
       folder,
@@ -77,6 +95,13 @@ export const uploadToCloudinary = async (file, folder = 'linkedin-clone', option
  * @returns {Promise<Object>} - Upload result
  */
 export const uploadBase64ToCloudinary = async (base64String, folder = 'linkedin-clone') => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    return {
+      url: base64String,
+      publicId: null,
+      format: 'base64',
+    };
+  }
   try {
     const result = await cloudinary.uploader.upload(base64String, {
       folder,
@@ -104,6 +129,9 @@ export const uploadBase64ToCloudinary = async (base64String, folder = 'linkedin-
  * @returns {Promise<Object>} - Deletion result
  */
 export const deleteFromCloudinary = async (publicId) => {
+  if (!publicId || !process.env.CLOUDINARY_CLOUD_NAME) {
+    return { result: 'skipped' };
+  }
   try {
     const result = await cloudinary.uploader.destroy(publicId);
     return result;

@@ -111,7 +111,7 @@ export default function PostDetailPage() {
                 Go Back
               </button>
               <button
-                onClick={() => navigate("/linkedin/feed")}
+                onClick={() => navigate("/feed")}
                 className="px-4 py-2 bg-color-button-blue text-white rounded-full hover:bg-color-button-blue-darker transition-colors font-medium"
               >
                 <i className="fas fa-home mr-2" />
@@ -135,7 +135,7 @@ export default function PostDetailPage() {
           <div className="text-center text-color-text">
             <p>Post data is unavailable</p>
             <button
-              onClick={() => navigate("/linkedin/feed")}
+              onClick={() => navigate("/feed")}
               className="mt-4 text-color-button-blue hover:text-color-button-blue-darker"
             >
               Return to Feed
@@ -178,7 +178,7 @@ export default function PostDetailPage() {
               index={0}
               onPostDeleted={() => {
                 // Navigate back to feed when post is deleted
-                navigate("/linkedin/feed");
+                navigate("/feed");
               }}
             />
           </motion.div>

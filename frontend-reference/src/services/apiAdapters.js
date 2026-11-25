@@ -3,25 +3,38 @@
  * @description Adapters to transform REST API responses to match frontend data models
  */
 
+import { getAuthToken } from "../utilities/authStorage";
+import { normalizeCampusMeta, resolveAvatarUrl } from "../utilities/CampusRoleUtils";
+
 // API Base URL from environment variable
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 /**
- * Transform API user response to frontend User model
+ * Transform API user response to frontend User model (including DBUU campus fields)
  * @param {Object} apiUser - User object from API
  * @returns {Object} Formatted user object for frontend
  */
 export const adaptUserFromAPI = (apiUser) => {
   if (!apiUser) return null;
 
+  const campus = normalizeCampusMeta(apiUser);
+
   return {
     strUserId: apiUser._id,
     strEmail: apiUser.email,
     strFullName: apiUser.fullName,
     strAuthMethod: apiUser.authMethod,
-    strProfilePicURL: apiUser.profilePicURL || "",
+    strProfilePicURL: resolveAvatarUrl(apiUser.profilePicURL),
     dtCreatedOn: new Date(apiUser.createdAt),
     booActive: apiUser.active !== false,
+    strRole: campus.role,
+    strDepartment: campus.department,
+    strAcademicYear: campus.academicYear,
+    strRollNumber: campus.rollNumber,
+    intGraduationYear: campus.graduationYear,
+    strCurrentPosition: campus.currentPosition,
+    intDoubtsAsked: campus.doubtsAsked,
+    intDoubtsResolved: campus.doubtsResolved,
     objProfile: apiUser.profile ? adaptProfileFromAPI(apiUser.profile, apiUser) : null,
   };
 };
@@ -35,6 +48,8 @@ export const adaptUserFromAPI = (apiUser) => {
 export const adaptProfileFromAPI = (apiProfile, apiUser) => {
   if (!apiProfile) return null;
 
+  const campus = normalizeCampusMeta(apiUser);
+
   return {
     strProfileId: `${apiUser._id}-en`, // Composite ID (userId-languageId)
     booPrimary: true, // Backend has single profile, always primary
@@ -47,11 +62,17 @@ export const adaptProfileFromAPI = (apiProfile, apiUser) => {
       strCountryLoc: apiProfile.countryLoc || "",
       strPostalCodeLoc: apiProfile.postalCodeLoc || "",
     },
-    strProfilePicURL: apiUser.profilePicURL || "",
+    strProfilePicURL: resolveAvatarUrl(apiUser.profilePicURL),
     strBgPicPath: apiProfile.backgroundPicURL || "",
     dtCreatedOn: new Date(apiUser.createdAt),
     booActive: apiUser.active !== false,
     strUserId: apiUser._id,
+    strRole: campus.role,
+    strDepartment: campus.department,
+    strAcademicYear: campus.academicYear,
+    strRollNumber: campus.rollNumber,
+    intGraduationYear: campus.graduationYear,
+    strCurrentPosition: campus.currentPosition,
   };
 };
 
@@ -68,15 +89,24 @@ export const adaptPostFromAPI = (apiPost) => {
   let userProfile = null;
   
   if (apiPost.user && typeof apiPost.user === "object") {
+    const campus = normalizeCampusMeta(apiPost.user);
+    const safeAvatar = resolveAvatarUrl(apiPost.user.profilePicURL);
+
     // User is populated - create adapted user and profile
     adaptedUser = {
       strUserId: apiPost.user._id,
       strEmail: apiPost.user.email || "",
       strFullName: apiPost.user.fullName || "",
       strAuthMethod: apiPost.user.authMethod || "email-password",
-      strProfilePicURL: apiPost.user.profilePicURL || "",
+      strProfilePicURL: safeAvatar,
       dtCreatedOn: apiPost.user.createdAt ? new Date(apiPost.user.createdAt) : new Date(),
       booActive: apiPost.user.active !== false,
+      strRole: campus.role,
+      strDepartment: campus.department,
+      strAcademicYear: campus.academicYear,
+      strRollNumber: campus.rollNumber,
+      intGraduationYear: campus.graduationYear,
+      strCurrentPosition: campus.currentPosition,
       objProfile: null, // Will set below
     };
 
@@ -93,11 +123,17 @@ export const adaptPostFromAPI = (apiPost) => {
         strCountryLoc: apiPost.user.profile?.countryLoc || "",
         strPostalCodeLoc: apiPost.user.profile?.postalCodeLoc || "",
       },
-      strProfilePicURL: apiPost.user.profilePicURL || "",
+      strProfilePicURL: safeAvatar,
       strBgPicPath: apiPost.user.profile?.backgroundPicURL || "",
       dtCreatedOn: apiPost.user.createdAt ? new Date(apiPost.user.createdAt) : new Date(),
       booActive: apiPost.user.active !== false,
       strUserId: apiPost.user._id,
+      strRole: campus.role,
+      strDepartment: campus.department,
+      strAcademicYear: campus.academicYear,
+      strRollNumber: campus.rollNumber,
+      intGraduationYear: campus.graduationYear,
+      strCurrentPosition: campus.currentPosition,
     };
 
     adaptedUser.objProfile = userProfile;
@@ -123,8 +159,11 @@ export const adaptPostFromAPI = (apiPost) => {
     reactions: apiPost.reactions || [],
     reactionCount: apiPost.reactionCount || apiPost.reactions?.length || 0,
     reactionCounts: apiPost.reactionCounts || {},
-    // Hashtags
+    // Hashtags & DBUU campus query metadata
     hashtags: apiPost.hashtags || [],
+    tags: apiPost.tags || apiPost.hashtags || [],
+    queryStatus: apiPost.queryStatus || "none",
+    resolvedBy: apiPost.resolvedBy || null,
   };
 };
 
@@ -227,7 +266,7 @@ export const commentReactionAPI = {
    * @returns {Promise<Object>} API response
    */
   async toggleReaction(postId, commentId, reactionType = "like") {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
     const response = await fetch(
       `${API_BASE_URL}/posts/${postId}/comments/${commentId}/reactions`,
       {
@@ -255,7 +294,7 @@ export const commentReactionAPI = {
    * @returns {Promise<Object>} API response
    */
   async getReactions(postId, commentId) {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
     const headers = {
       "Content-Type": "application/json",
     };

@@ -5,8 +5,8 @@ import {
   loginWithGoogle,
 } from "../../../../redux/thunks/authThunks";
 import { NavigationPaths } from "../../../../utilities";
-// eslint-disable-next-line no-unused-vars
-import { NavigateFunction } from "react-router-dom";
+
+/** @typedef {import("react-router-dom").NavigateFunction} NavigateFunction */
 
 /**
  * @module HeroFormUtil

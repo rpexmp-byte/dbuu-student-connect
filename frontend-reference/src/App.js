@@ -13,8 +13,11 @@ const ToastContainer = lazy(() =>
     default: module.ToastContainer,
   }))
 );
-import { NavigationPaths } from "./utilities";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import {
+  NavigationPaths,
+  getStoredUserObj,
+} from "./utilities";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileV2 from "./pages/Profile/ProfileV2";
 import { SocketProvider } from "./contexts/SocketContext";
@@ -22,36 +25,32 @@ import { ReactionProvider } from "./contexts/ReactionContext";
 import { UserProvider } from "./contexts/UserContext";
 import { PostModalProvider } from "./contexts/PostModalContext";
 
+/**
+ * Redirects legacy `/linkedin` and `/linkedin/*` paths to root-relative routes
+ * while preserving query parameters (e.g. password reset tokens) and hashes.
+ */
+function LegacyLinkedinRedirect() {
+  const location = useLocation();
+  const targetPath = location.pathname.replace(/^\/linkedin(?=\/|$)/, "") || "/";
+  return <Navigate to={`${targetPath}${location.search}${location.hash}`} replace />;
+}
+
 function App() {
   // Get current user from localStorage for ReactionProvider
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    try {
-      const user = localStorage.getItem("user");
-      if (user) {
-        setCurrentUser(JSON.parse(user));
-      }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage:", error);
-    }
-
-    // Listen for storage changes (login/logout events)
     const handleStorageChange = () => {
-      try {
-        const user = localStorage.getItem("user");
-        if (user) {
-          setCurrentUser(JSON.parse(user));
-        } else {
-          setCurrentUser(null);
-        }
-      } catch (error) {
-        console.error("Failed to parse user from localStorage:", error);
-      }
+      setCurrentUser(getStoredUserObj());
     };
 
+    handleStorageChange();
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("auth-changed", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-changed", handleStorageChange);
+    };
   }, []);
 
   return (
@@ -73,6 +72,9 @@ function App() {
                     <Route path={NavigationPaths.MESSAGING} element={<MessagingPage />} />
                     <Route path={`${NavigationPaths.MESSAGING}/:userId`} element={<MessagingPage />} />
                   </Route>
+                  <Route path="/linkedin" element={<LegacyLinkedinRedirect />} />
+                  <Route path="/linkedin/*" element={<LegacyLinkedinRedirect />} />
+                  <Route path={NavigationPaths.UNKNOWN} element={<Navigate to="/" replace />} />
                 </Routes>
               </PostModalProvider>
             </SocketProvider>

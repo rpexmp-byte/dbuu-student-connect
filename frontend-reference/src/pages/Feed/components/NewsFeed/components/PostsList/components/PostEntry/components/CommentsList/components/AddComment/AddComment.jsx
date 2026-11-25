@@ -3,6 +3,7 @@
  * Input box to add new comments
  */
 import React, { useState } from "react";
+import { getAuthToken } from "../../../../../../../../../../../../utilities/authStorage";
 import "./AddComment.css";
 
 // API Base URL from environment variable
@@ -28,7 +29,7 @@ export default function AddComment({ postId, currentUser, onCommentAdded }) {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
         method: "POST",
         headers: {

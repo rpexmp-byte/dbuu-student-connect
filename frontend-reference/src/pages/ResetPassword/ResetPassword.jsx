@@ -136,7 +136,7 @@ export default function ResetPassword() {
 
             <button
               type="button"
-              onClick={() => navigate("/linkedin")}
+              onClick={() => navigate("/")}
               className="w-full text-color-blue hover:underline text-sm font-semibold"
               disabled={isLoading}
             >

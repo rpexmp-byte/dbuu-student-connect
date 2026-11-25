@@ -1,11 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { FadeInAnimationDiv } from "../../../../../../components/FadeInAnimationDiv";
-// eslint-disable-next-line no-unused-vars
-import { User } from "../../../../../../models";
-import { Constants } from "../../../../../../utilities";
+import { RoleBadge } from "../../../../../../components";
+import {
+  Constants,
+  NavigationPaths,
+  resolveAvatarUrl,
+} from "../../../../../../utilities";
+
+/** @typedef {import("../../../../../../models/User").User} User */
 
 /**
- *
+ * DBUU Student / Alumni / Faculty profile summary card in the left feed sidebar.
  * @param {Object} props
  * @param {User} props.objLoggedUser
  * @returns {JSX.Element}
@@ -14,121 +19,118 @@ export default function UserInformationMain({ objLoggedUser }) {
   const navigate = useNavigate();
 
   const handleProfileClick = () => {
-    if (objLoggedUser.strUserId) {
+    if (objLoggedUser?.strUserId) {
       navigate(`/profile/${objLoggedUser.strUserId}`);
     }
   };
+
+  const avatarSrc = resolveAvatarUrl(objLoggedUser?.strProfilePicURL);
+  const role = objLoggedUser?.strRole || "student";
+  const department = objLoggedUser?.strDepartment || "SoEC - Computer Science & Engineering";
+  const academicYear = objLoggedUser?.strAcademicYear || "3rd Year";
+  const rollNumber = objLoggedUser?.strRollNumber || "";
+  const graduationYear = objLoggedUser?.intGraduationYear || null;
+
+  const headline =
+    objLoggedUser?.objProfile?.objIntro?.strHeadline ===
+      Constants.ProfileHeadLineEmptyName ||
+    !objLoggedUser?.objProfile?.objIntro?.strHeadline
+      ? department
+      : objLoggedUser.objProfile.objIntro.strHeadline;
+
   return (
-    <div className="overflow-hidden flex flex-col w-full sm:w-[230px] lg:w-60 h-fit rounded-lg bg-white shadow-sm p-3 pb-0">
+    <div className="flex flex-col w-full rounded-xl bg-white shadow-sm border border-[#E2E8F0] overflow-hidden">
+      {/* Top DBUU Navy Gradient Cover (no avatar inside overflow-hidden) */}
       <FadeInAnimationDiv
-        strDuration="duration-[4000ms]"
-        className="relative h-14 sm:h-[57px] flex justify-center m-[-12px] mb-0 bg-center bg-cover"
-        style={{
-          backgroundImage:
-            "url('" + objLoggedUser.objProfile?.strBgPicPath + "')",
-        }}
+        strDuration="duration-[2000ms]"
+        className="relative h-16 bg-gradient-to-r from-[#172B52] via-[#223B6B] to-[#0D1A33]"
       >
-        <div 
-          className="absolute w-16 h-16 sm:w-[72px] sm:h-[72px] bottom-[-32px] sm:bottom-[-36px] cursor-pointer"
+        <div
+          className="absolute inset-0 opacity-15 bg-center bg-cover"
+          style={
+            objLoggedUser?.objProfile?.strBgPicPath
+              ? { backgroundImage: `url('${objLoggedUser.objProfile.strBgPicPath}')` }
+              : undefined
+          }
+        />
+        <span className="absolute top-2 right-2.5 px-2 py-0.5 rounded bg-black/25 text-[10px] font-bold tracking-wider uppercase text-white/90">
+          DBUU Campus
+        </span>
+      </FadeInAnimationDiv>
+
+      {/* Safe Avatar Stacking Outside Banner Clipping */}
+      <div className="relative z-10 flex flex-col items-center px-4 pb-4 -mt-9">
+        <button
+          type="button"
           onClick={handleProfileClick}
+          className="w-[72px] h-[72px] rounded-full border-4 border-white ring-2 ring-[#F58220] bg-white overflow-hidden shadow-md hover:opacity-95 transition-opacity cursor-pointer"
+          aria-label="Open DBUU campus profile"
         >
           <img
             referrerPolicy="no-referrer"
-            className="w-full h-auto rounded-full hover:opacity-90 transition-opacity border-4 border-white"
-            src={objLoggedUser.strProfilePicURL}
-            alt={objLoggedUser.strFullName}
+            className="w-full h-full object-cover"
+            src={avatarSrc}
+            alt={objLoggedUser?.strFullName || "DBUU Member"}
+            onError={(e) => {
+              e.currentTarget.src = "/student_avatar.jpg";
+            }}
           />
-        </div>
-      </FadeInAnimationDiv>
-      <div className="flex flex-col items-center mt-12 sm:mt-[54px] mb-4 px-2">
-        <a 
-          onClick={handleProfileClick}
-          className="hover:underline cursor-pointer text-center text-color-text-darker uppercase font-bold text-base sm:text-[17px] leading-6 break-words w-full"
-        >
-          {objLoggedUser.strFullName}
-        </a>
-        <p className="text-xs sm:text-[13px] text-color-text font-medium text-center mt-1 sm:mt-[2px] break-words w-full px-1">
-          {objLoggedUser.objProfile?.objIntro.strHeadline ===
-          Constants.ProfileHeadLineEmptyName
-            ? "--"
-            : objLoggedUser.objProfile?.objIntro.strHeadline}
-        </p>
-      </div>
-      <div className="border-solid border-t mx-[-12px]"></div>
-      <div className=" py-3 flex">
+        </button>
+
         <button
           type="button"
-          className=" p-1 flex justify-between flex-1 text-xs hover:bg-[#00000014] mx-[-12px]"
+          onClick={handleProfileClick}
+          className="mt-2.5 text-center text-[#0F172A] hover:text-[#172B52] hover:underline font-bold text-base leading-tight capitalize break-words w-full"
         >
-          <div className=" flex flex-col items-start justify-center ml-3">
-            <p className=" text-color-text font-bold">Connections</p>
-            <p className="font-bold">Grow your Network</p>
-          </div>
-          <div className="pt-[1px]  mr-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 16 16"
-              data-supported-dps="16x16"
-              fill="currentColor"
-              width="16"
-              height="16"
-              focusable="false"
-            >
-              <path d="M9 4a3 3 0 11-3-3 3 3 0 013 3zM6.75 8h-1.5A2.25 2.25 0 003 10.25V15h6v-4.75A2.25 2.25 0 006.75 8zM13 8V6h-1v2h-2v1h2v2h1V9h2V8z"></path>
-            </svg>
-          </div>
+          {objLoggedUser?.strFullName || "DBUU Member"}
+        </button>
+
+        <div className="mt-1.5">
+          <RoleBadge
+            role={role}
+            academicYear={academicYear}
+            graduationYear={graduationYear}
+          />
+        </div>
+
+        <p className="text-xs text-[#64748B] font-medium text-center mt-2 leading-snug break-words w-full">
+          {headline}
+        </p>
+
+        {rollNumber ? (
+          <span className="mt-1.5 text-[11px] font-semibold text-[#172B52] bg-[#F1F5F9] px-2.5 py-0.5 rounded-full">
+            ID: {rollNumber}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Campus Stats Footer */}
+      <div className="border-t border-[#E2E8F0] divide-y divide-[#E2E8F0]">
+        <button
+          type="button"
+          onClick={() => navigate(`/${NavigationPaths.MESSAGING}`)}
+          className="w-full px-4 py-2.5 flex items-center justify-between text-xs hover:bg-[#FFF9F3] transition-colors"
+        >
+          <span className="text-[#64748B] font-semibold">Campus Peers & Faculty</span>
+          <span className="font-bold text-[#172B52]">Message →</span>
+        </button>
+
+        <div className="px-4 py-2.5 flex items-center justify-between text-xs bg-[#FFF9F3]/60">
+          <span className="text-[#64748B] font-semibold">AI Helpdesk Queue</span>
+          <span className="font-bold text-[#F58220] text-[11px] px-2 py-0.5 rounded-full bg-orange-100">
+            Phase 2
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleProfileClick}
+          className="w-full px-4 py-2.5 text-xs font-bold text-[#172B52] flex items-center gap-2 hover:bg-[#F8FAFC] transition-colors"
+        >
+          <i className="fas fa-id-card text-[#F58220]" aria-hidden="true" />
+          <span>View Academic Profile</span>
         </button>
       </div>
-      <div className="border-solid border-t mx-[-12px]"></div>
-      <button
-        type="button"
-        className=" py-3 text-xs hover:bg-[#00000014] mx-[-12px]"
-      >
-        <p className="text-color-text text-left mx-3">
-          {"Access exclusive tools & insights"}
-        </p>
-        <span className="flex items-center gap-1 text-color-text-darker text-xs font-bold hover:text-color-blue  w-fit mx-3 mt-[2px]">
-          <svg
-            className="w-4 h-4"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            data-supported-dps="24x24"
-            width="24"
-            height="24"
-            focusable="false"
-          >
-            <path
-              d="M20 20a3.36 3.36 0 001-2.39V6.38A3.38 3.38 0 0017.62 3H6.38A3.36 3.36 0 004 4z"
-              fill="#f8c77e"
-            ></path>
-            <path
-              d="M4 4a3.36 3.36 0 00-1 2.38v11.24A3.38 3.38 0 006.38 21h11.24A3.36 3.36 0 0020 20z"
-              fill="#e7a33e"
-            ></path>
-          </svg>
-          Try Premium for free
-        </span>
-      </button>
-      <div className="border-solid border-t mx-[-12px]"></div>
-      <button
-        type="button"
-        className=" py-3 text-xs font-bold flex gap-2 hover:bg-[#00000014] mx-[-12px]"
-      >
-        <span className=" text-color-text ml-3">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            data-supported-dps="16x16"
-            fill="currentColor"
-            width="16"
-            height="16"
-            focusable="false"
-          >
-            <path d="M12 1H4a1 1 0 00-1 1v13.64l5-3.36 5 3.36V2a1 1 0 00-1-1z"></path>
-          </svg>
-        </span>
-        <p>My Items</p>
-      </button>
     </div>
   );
 }

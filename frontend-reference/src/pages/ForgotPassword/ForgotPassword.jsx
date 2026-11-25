@@ -90,7 +90,7 @@ export default function ForgotPassword() {
 
               <button
                 type="button"
-                onClick={() => navigate("/linkedin")}
+                onClick={() => navigate("/")}
                 className="w-full text-color-blue hover:underline text-sm font-semibold"
                 disabled={isLoading}
               >
@@ -123,7 +123,7 @@ export default function ForgotPassword() {
 
               <button
                 type="button"
-                onClick={() => navigate("/linkedin")}
+                onClick={() => navigate("/")}
                 className="w-full text-color-text-low-emphasis hover:text-color-text text-sm"
               >
                 Back to Sign In

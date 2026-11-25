@@ -5,6 +5,12 @@
 
 import axios from "axios";
 import { toast } from "react-toastify";
+import {
+  clearAuthStorage,
+  getAuthToken,
+  getRefreshToken,
+  setAuthToken,
+} from "../utilities/authStorage";
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -20,7 +26,7 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -50,7 +56,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to refresh token
-        const refreshToken = localStorage.getItem("refreshToken");
+        const refreshToken = getRefreshToken();
         
         if (refreshToken) {
           const response = await axios.post(
@@ -59,7 +65,7 @@ apiClient.interceptors.response.use(
           );
 
           const { token } = response.data;
-          localStorage.setItem("token", token);
+          setAuthToken(token);
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -67,9 +73,7 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed - logout user
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        clearAuthStorage();
         
         toast.error("Session expired. Please login again.");
         

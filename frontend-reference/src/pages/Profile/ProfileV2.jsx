@@ -115,6 +115,27 @@ export default function ProfileV2() {
       bannerUrl: updatedUserData.profile?.backgroundPicURL || profile.bannerUrl,
       location: updatedUserData.profile?.location || "",
       bio: updatedUserData.profile?.about || "",
+      role: updatedUserData.role || updatedUserData.profile?.role || profile.role,
+      department:
+        updatedUserData.department ||
+        updatedUserData.profile?.department ||
+        profile.department,
+      academicYear:
+        updatedUserData.academicYear ||
+        updatedUserData.profile?.academicYear ||
+        profile.academicYear,
+      rollNumber:
+        updatedUserData.rollNumber ||
+        updatedUserData.profile?.rollNumber ||
+        profile.rollNumber,
+      graduationYear:
+        updatedUserData.graduationYear ||
+        updatedUserData.profile?.graduationYear ||
+        profile.graduationYear,
+      currentPosition:
+        updatedUserData.currentPosition ||
+        updatedUserData.profile?.currentPosition ||
+        profile.currentPosition,
       experience: updatedUserData.profile?.experience || [],
       education: updatedUserData.profile?.education || [],
       skills: updatedUserData.profile?.skills || [],

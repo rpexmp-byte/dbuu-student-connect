@@ -1,23 +1,34 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { authAPI, adaptUserFromAPI } from "../../services";
+import { saveCampusMetaLocal } from "../../utilities/CampusRoleUtils";
 import { toast } from "react-toastify";
 
 /**
- * Register a new user with email and password
+ * Register a new user with email, password, and DBUU campus role details
  * @param {Object} credentials - User registration data
- * @param {string} credentials.email - User email
- * @param {string} credentials.password - User password
- * @param {string} credentials.fullName - User full name
- * @param {string} credentials.firstName - User first name
- * @param {string} credentials.lastName - User last name
- * @param {string} credentials.headline - User professional headline
- * @param {string} credentials.countryLoc - User country
- * @param {string} credentials.postalCodeLoc - User postal code
- * @param {File} credentials.profileImage - Optional profile picture file
  */
 export const registerUser = createAsyncThunk(
   "auth/register",
-  async ({ email, password, fullName, firstName, lastName, headline, countryLoc, postalCodeLoc, profileImage }, { rejectWithValue }) => {
+  async (
+    {
+      email,
+      password,
+      fullName,
+      firstName,
+      lastName,
+      headline,
+      countryLoc,
+      postalCodeLoc,
+      role,
+      department,
+      academicYear,
+      rollNumber,
+      graduationYear,
+      currentPosition,
+      profileImage,
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const additionalData = {
         firstName,
@@ -25,9 +36,29 @@ export const registerUser = createAsyncThunk(
         headline,
         countryLoc,
         postalCodeLoc,
+        role,
+        department,
+        academicYear,
+        rollNumber,
+        graduationYear,
+        currentPosition,
       };
-      const response = await authAPI.registerUser(email, password, fullName, additionalData, profileImage);
-      toast.success("Registration successful!");
+      const response = await authAPI.registerUser(
+        email,
+        password,
+        fullName,
+        additionalData,
+        profileImage
+      );
+      saveCampusMetaLocal(response.user?._id, email, {
+        role,
+        department,
+        academicYear,
+        rollNumber,
+        graduationYear,
+        currentPosition,
+      });
+      toast.success("Welcome to DBUU Student Connect!");
       return adaptUserFromAPI(response.user);
     } catch (error) {
       // apiClient already returns error.response.data, so error.message is the actual message

@@ -1,12 +1,13 @@
 {
-  "name": "linkedin-clone-backend",
+  "name": "dbuu-student-connect-backend",
   "version": "1.0.0",
-  "description": "LinkedIn Clone Backend API - Node.js + Express + MongoDB",
+  "description": "DBUU Student Connect: Intra-College Mentorship Platform Backend",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "seed": "node src/scripts/seedDemoTeam.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

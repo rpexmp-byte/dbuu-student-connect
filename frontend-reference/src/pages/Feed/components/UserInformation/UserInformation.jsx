@@ -1,7 +1,7 @@
 import { UserInformationMain } from "./components/UserInformationMain";
-// eslint-disable-next-line no-unused-vars
-import { User } from "../../../../models";
 import { UserInformationMainAdditional } from "./components/UserInformationAdditional";
+
+/** @typedef {import("../../../../models/User").User} User */
 
 /**
  *

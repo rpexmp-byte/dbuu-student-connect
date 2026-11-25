@@ -3,16 +3,16 @@
  * @description Tests for like toggle race conditions, idempotency, and reconciliation
  */
 
-import configureMockStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
-import { toggleLike } from '../redux/thunks/postThunks';
-import * as postAPI from '../services/postService';
+import configureMockStore from "redux-mock-store";
+import { thunk } from "redux-thunk";
+import { toggleLike } from "../redux/thunks/postThunks";
+import * as postAPI from "../services/postService";
 
 // Mock the postAPI module
-jest.mock('../services/postService');
+jest.mock("../services/postService");
 
 // Mock react-toastify
-jest.mock('react-toastify', () => ({
+jest.mock("react-toastify", () => ({
   toast: {
     success: jest.fn(),
     error: jest.fn(),
@@ -23,10 +23,10 @@ jest.mock('react-toastify', () => ({
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
 
-describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
+describe("Like Toggle - Race Conditions and Idempotency Tests", () => {
   let store;
-  const mockPostId = 'post123';
-  const mockUserId = 'user456';
+  const mockPostId = "post123";
+  const mockUserId = "user456";
 
   beforeEach(() => {
     store = mockStore({
@@ -43,8 +43,13 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('Request Deduplication', () => {
-    it('should deduplicate rapid double-clicks within 500ms', async () => {
+  afterEach(async () => {
+    // Allow dedup window (>500ms) or wait briefly between suites using identical mockPostId
+    await new Promise((resolve) => setTimeout(resolve, 520));
+  });
+
+  describe("Request Deduplication", () => {
+    it("should deduplicate rapid double-clicks within 500ms", async () => {
       // Mock API to respond slowly
       const mockResponse = {
         success: true,
@@ -55,17 +60,23 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
           likes: [mockUserId],
           likeCount: 1,
         },
-        requestId: 'req_1',
+        requestId: "req_1",
       };
 
+      let capturedRequestId;
       let resolveFirst;
       const firstCallPromise = new Promise((resolve) => {
         resolveFirst = resolve;
       });
 
       postAPI.toggleLikePost
-        .mockImplementationOnce(() => firstCallPromise)
-        .mockResolvedValueOnce(mockResponse);
+        .mockImplementationOnce((_, reqId) => {
+          capturedRequestId = reqId;
+          return firstCallPromise;
+        })
+        .mockImplementationOnce((_, reqId) =>
+          Promise.resolve({ ...mockResponse, requestId: reqId })
+        );
 
       // Trigger two rapid clicks
       const promise1 = store.dispatch(toggleLike({ postId: mockPostId, userId: mockUserId }));
@@ -74,8 +85,8 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       const promise2 = store.dispatch(toggleLike({ postId: mockPostId, userId: mockUserId }));
 
-      // Resolve first request
-      resolveFirst(mockResponse);
+      // Resolve first request matching its requestId
+      resolveFirst({ ...mockResponse, requestId: capturedRequestId });
 
       await Promise.all([promise1, promise2]);
 
@@ -83,7 +94,7 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
       expect(postAPI.toggleLikePost).toHaveBeenCalledTimes(1);
     }, 10000);
 
-    it('should NOT deduplicate clicks more than 500ms apart', async () => {
+    it("should NOT deduplicate clicks more than 500ms apart", async () => {
       const mockResponse = {
         success: true,
         liked: true,
@@ -93,10 +104,12 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
           likes: [mockUserId],
           likeCount: 1,
         },
-        requestId: 'req_1',
+        requestId: "req_1",
       };
 
-      postAPI.toggleLikePost.mockResolvedValue(mockResponse);
+      postAPI.toggleLikePost.mockImplementation((_, reqId) =>
+        Promise.resolve({ ...mockResponse, requestId: reqId })
+      );
 
       // First click
       await store.dispatch(toggleLike({ postId: mockPostId, userId: mockUserId }));
@@ -112,8 +125,8 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
     }, 10000);
   });
 
-  describe('Idempotency', () => {
-    it('should handle server returning same state on duplicate requests', async () => {
+  describe("Idempotency", () => {
+    it("should handle server returning same state on duplicate requests", async () => {
       const mockResponse = {
         success: true,
         liked: true,
@@ -123,10 +136,12 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
           likes: [mockUserId],
           likeCount: 1,
         },
-        requestId: 'req_1',
+        requestId: "req_1",
       };
 
-      postAPI.toggleLikePost.mockResolvedValue(mockResponse);
+      postAPI.toggleLikePost.mockImplementation((_, reqId) =>
+        Promise.resolve({ ...mockResponse, requestId: reqId })
+      );
 
       // Click once
       const result1 = await store.dispatch(
@@ -145,12 +160,11 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
     });
   });
 
-  describe('Stale Response Handling', () => {
-    it('should ignore responses with mismatched requestId', async () => {
-      const oldRequestId = 'req_old_123';
-      const newRequestId = 'req_new_456';
+  describe("Stale Response Handling", () => {
+    it("should ignore responses with mismatched requestId", async () => {
+      const oldRequestId = "req_old_123";
 
-      // First response (stale)
+      // First response (mismatched/stale requestId)
       const staleResponse = {
         success: true,
         liked: false,
@@ -163,7 +177,7 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
         requestId: oldRequestId,
       };
 
-      // Second response (current)
+      // Second response (matching requestId)
       const currentResponse = {
         success: true,
         liked: true,
@@ -173,23 +187,37 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
           likes: [mockUserId],
           likeCount: 1,
         },
-        requestId: newRequestId,
       };
 
-      let resolveStale, resolveCurrent;
-      
+      let resolveStale, resolveCurrent, secondRequestId;
+
       postAPI.toggleLikePost
         .mockImplementationOnce(() => new Promise((resolve) => {
           resolveStale = () => resolve(staleResponse);
         }))
-        .mockImplementationOnce(() => new Promise((resolve) => {
-          resolveCurrent = () => resolve(currentResponse);
-        }));
+        .mockImplementationOnce((_, reqId) => {
+          secondRequestId = reqId;
+          return new Promise((resolve) => {
+            resolveCurrent = () => resolve({ ...currentResponse, requestId: secondRequestId });
+          });
+        });
+
+      // Mock canonical fallback for the rejected stale request
+      postAPI.getPostById.mockResolvedValueOnce({
+        post: {
+          _id: mockPostId,
+          likes: [mockUserId],
+          likeCount: 1,
+        },
+      });
 
       // Start first request
       const promise1 = store.dispatch(
         toggleLike({ postId: mockPostId, userId: mockUserId })
       );
+
+      // Wait past 500ms dedup window so second request runs concurrently
+      await new Promise((resolve) => setTimeout(resolve, 520));
 
       // Start second request
       const promise2 = store.dispatch(
@@ -201,22 +229,18 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
       await promise2;
 
       resolveStale();
-      try {
-        await promise1;
-      } catch (error) {
-        // Expect stale response to be rejected
-        expect(error.message).toContain('Stale response');
-      }
+      const staleResult = await promise1;
+      expect(staleResult.payload.reconciled).toBe(true);
     }, 10000);
   });
 
-  describe('Error Handling and Reconciliation', () => {
-    it('should reconcile with server state on error if post is liked', async () => {
+  describe("Error Handling and Reconciliation", () => {
+    it("should reconcile with server state on error if post is liked", async () => {
       // Mock toggle to fail
-      postAPI.toggleLikePost.mockRejectedValueOnce(new Error('Network error'));
+      postAPI.toggleLikePost.mockRejectedValueOnce(new Error("Network error"));
 
       // Mock getPostById to return canonical state showing post is liked
-      postAPI.getPostById = jest.fn().mockResolvedValueOnce({
+      postAPI.getPostById.mockResolvedValueOnce({
         post: {
           _id: mockPostId,
           likes: [mockUserId],
@@ -235,23 +259,23 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
       expect(postAPI.getPostById).toHaveBeenCalledWith(mockPostId);
     });
 
-    it('should show error if reconciliation also fails', async () => {
+    it("should show error if reconciliation also fails", async () => {
       // Mock both toggle and getPostById to fail
-      postAPI.toggleLikePost.mockRejectedValueOnce(new Error('Network error'));
-      postAPI.getPostById = jest.fn().mockRejectedValueOnce(new Error('Network error'));
+      postAPI.toggleLikePost.mockRejectedValueOnce(new Error("Network error"));
+      postAPI.getPostById.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await store.dispatch(
         toggleLike({ postId: mockPostId, userId: mockUserId })
       );
 
       // Should reject with error
-      expect(result.type).toContain('rejected');
+      expect(result.type).toContain("rejected");
       expect(result.payload.message).toBeDefined();
     });
   });
 
-  describe('Optimistic Updates', () => {
-    it('should update UI optimistically before server response', () => {
+  describe("Optimistic Updates", () => {
+    it("should update UI optimistically before server response", () => {
       const mockResponse = {
         success: true,
         liked: true,
@@ -261,7 +285,7 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
           likes: [mockUserId],
           likeCount: 1,
         },
-        requestId: 'req_1',
+        requestId: "req_1",
       };
 
       let resolvePromise;
@@ -276,15 +300,15 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
 
       // Check that pending action was dispatched (optimistic update)
       const actions = store.getActions();
-      expect(actions[0].type).toContain('pending');
+      expect(actions[0].type).toContain("pending");
 
       // Resolve the promise
       resolvePromise(mockResponse);
     });
 
-    it('should rollback optimistic update on error', async () => {
-      postAPI.toggleLikePost.mockRejectedValueOnce(new Error('Server error'));
-      postAPI.getPostById = jest.fn().mockRejectedValueOnce(new Error('Network error'));
+    it("should rollback optimistic update on error", async () => {
+      postAPI.toggleLikePost.mockRejectedValueOnce(new Error("Server error"));
+      postAPI.getPostById.mockRejectedValueOnce(new Error("Network error"));
 
       await store.dispatch(
         toggleLike({ postId: mockPostId, userId: mockUserId })
@@ -293,13 +317,13 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
       const actions = store.getActions();
       
       // Should have pending and rejected actions
-      expect(actions.some(a => a.type.includes('pending'))).toBe(true);
-      expect(actions.some(a => a.type.includes('rejected'))).toBe(true);
+      expect(actions.some(a => a.type.includes("pending"))).toBe(true);
+      expect(actions.some(a => a.type.includes("rejected"))).toBe(true);
     });
   });
 
-  describe('Slow Network Scenarios', () => {
-    it('should handle delayed response and reconcile correctly', async () => {
+  describe("Slow Network Scenarios", () => {
+    it("should handle delayed response and reconcile correctly", async () => {
       const mockResponse = {
         success: true,
         liked: true,
@@ -309,12 +333,14 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
           likes: [mockUserId],
           likeCount: 1,
         },
-        requestId: 'req_1',
+        requestId: "req_1",
       };
 
       // Simulate 2 second delay
-      postAPI.toggleLikePost.mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve(mockResponse), 2000))
+      postAPI.toggleLikePost.mockImplementation((_, reqId) =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ ...mockResponse, requestId: reqId }), 2000)
+        )
       );
 
       const startTime = Date.now();
@@ -330,19 +356,19 @@ describe('Like Toggle - Race Conditions and Idempotency Tests', () => {
     }, 5000);
   });
 
-  describe('Server 500 Error Handling', () => {
-    it('should fetch canonical state on 500 error', async () => {
+  describe("Server 500 Error Handling", () => {
+    it("should fetch canonical state on 500 error", async () => {
       const error = {
         response: {
           status: 500,
           data: {
-            message: 'Internal server error',
+            message: "Internal server error",
           },
         },
       };
 
       postAPI.toggleLikePost.mockRejectedValueOnce(error);
-      postAPI.getPostById = jest.fn().mockResolvedValueOnce({
+      postAPI.getPostById.mockResolvedValueOnce({
         post: {
           _id: mockPostId,
           likes: [mockUserId],

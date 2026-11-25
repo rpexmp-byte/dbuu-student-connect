@@ -3,8 +3,17 @@
  * Provides Socket.io with real-time presence, typing indicators, and messaging
  */
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { io } from "socket.io-client";
+import { getAuthToken, getStoredUserString } from "../utilities/authStorage";
 import { playNotificationSound, isWindowActive } from "../utilities/notificationSound";
 
 const SocketContext = createContext(null);
@@ -28,14 +37,30 @@ export const SocketProvider = ({ children }) => {
   
   // Legacy support for onlineUsers array
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [authVersion, setAuthVersion] = useState(0);
   
   const socketRef = useRef(null);
+  const activeTokenRef = useRef(getAuthToken());
+
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      const nextToken = getAuthToken();
+      if (nextToken !== activeTokenRef.current) {
+        activeTokenRef.current = nextToken;
+        setAuthVersion((prev) => prev + 1);
+      }
+    };
+    window.addEventListener("auth-changed", handleAuthChanged);
+    return () => {
+      window.removeEventListener("auth-changed", handleAuthChanged);
+    };
+  }, []);
 
   useEffect(() => {
     console.log("🔍 SocketContext useEffect triggered");
     
-    // Get auth token
-    const token = localStorage.getItem("token");
+    // Get per-tab auth token
+    const token = getAuthToken();
     console.log("🔑 Token check:", token ? "Token exists (length: " + token.length + ")" : "No token found");
     
     if (!token) {
@@ -189,8 +214,8 @@ export const SocketProvider = ({ children }) => {
 
     // Global message notification (for when chat window is not in focus)
     newSocket.on("new_message", ({ message }) => {
-      // Get current user ID from localStorage to check if message is from another user
-      const currentUserString = localStorage.getItem("user");
+      // Get current user ID from per-tab storage to check if message is from another user
+      const currentUserString = getStoredUserString();
       if (currentUserString) {
         try {
           const currentUser = JSON.parse(currentUserString);
@@ -212,70 +237,107 @@ export const SocketProvider = ({ children }) => {
       console.error("Socket error:", message);
     });
 
-    // Cleanup on unmount
+    // Cleanup on unmount or auth change
     return () => {
       console.log("Cleaning up socket connection");
       newSocket.close();
+      socketRef.current = null;
+      setConnected(false);
     };
-  }, []); // Empty dependency array - only connect once
+  }, [authVersion]);
 
-  const value = {
-    socket: socketRef.current,
-    connected,
-    
-    // Presence state
-    userPresence,
-    onlineUsers, // Legacy array format
-    
-    // Typing state
-    typingStates,
-    
-    // Helper methods
-    isUserOnline: (userId) => {
+  const isUserOnline = useCallback(
+    (userId) => {
       const presence = userPresence[userId];
       return presence?.status === "online" || onlineUsers.includes(userId);
     },
-    
-    getUserPresence: (userId) => userPresence[userId] || { status: "offline", lastSeen: null },
-    
-    isTypingInConversation: (conversationId) => typingStates[conversationId]?.isTyping || false,
-    
-    getTypingUser: (conversationId) => typingStates[conversationId] || null,
-    
-    // Emit events
-    joinConversation: (conversationId) => {
-      socketRef.current?.emit("join_conversation", { conversationId });
-    },
-    
-    leaveConversation: (conversationId) => {
-      socketRef.current?.emit("leave_conversation", { conversationId });
-    },
-    
-    sendMessage: (conversationId, content, tempId) => {
-      socketRef.current?.emit("send_message", { conversationId, content, tempId });
-    },
-    
-    startTyping: (conversationId) => {
+    [userPresence, onlineUsers]
+  );
+
+  const getUserPresence = useCallback(
+    (userId) => userPresence[userId] || { status: "offline", lastSeen: null },
+    [userPresence]
+  );
+
+  const isTypingInConversation = useCallback(
+    (conversationId) => typingStates[conversationId]?.isTyping || false,
+    [typingStates]
+  );
+
+  const getTypingUser = useCallback(
+    (conversationId) => typingStates[conversationId] || null,
+    [typingStates]
+  );
+
+  const joinConversation = useCallback((conversationId) => {
+    socketRef.current?.emit("join_conversation", { conversationId });
+  }, []);
+
+  const leaveConversation = useCallback((conversationId) => {
+    socketRef.current?.emit("leave_conversation", { conversationId });
+  }, []);
+
+  const sendMessage = useCallback((conversationId, content, tempId) => {
+    socketRef.current?.emit("send_message", { conversationId, content, tempId });
+  }, []);
+
+  const startTyping = useCallback((conversationId) => {
+    socketRef.current?.emit("typing:start", { conversationId });
+  }, []);
+
+  const stopTyping = useCallback((conversationId) => {
+    socketRef.current?.emit("typing:stop", { conversationId });
+  }, []);
+
+  const sendTyping = useCallback((conversationId, isTyping) => {
+    if (isTyping) {
       socketRef.current?.emit("typing:start", { conversationId });
-    },
-    
-    stopTyping: (conversationId) => {
+    } else {
       socketRef.current?.emit("typing:stop", { conversationId });
-    },
-    
-    // Legacy typing support
-    sendTyping: (conversationId, isTyping) => {
-      if (isTyping) {
-        socketRef.current?.emit("typing:start", { conversationId });
-      } else {
-        socketRef.current?.emit("typing:stop", { conversationId });
-      }
-    },
-    
-    markAsRead: (conversationId) => {
-      socketRef.current?.emit("mark_as_read", { conversationId });
     }
-  };
+  }, []);
+
+  const markAsRead = useCallback((conversationId) => {
+    socketRef.current?.emit("mark_as_read", { conversationId });
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      socket: socketRef.current,
+      connected,
+      userPresence,
+      onlineUsers,
+      typingStates,
+      isUserOnline,
+      getUserPresence,
+      isTypingInConversation,
+      getTypingUser,
+      joinConversation,
+      leaveConversation,
+      sendMessage,
+      startTyping,
+      stopTyping,
+      sendTyping,
+      markAsRead,
+    }),
+    [
+      connected,
+      userPresence,
+      onlineUsers,
+      typingStates,
+      isUserOnline,
+      getUserPresence,
+      isTypingInConversation,
+      getTypingUser,
+      joinConversation,
+      leaveConversation,
+      sendMessage,
+      startTyping,
+      stopTyping,
+      sendTyping,
+      markAsRead,
+    ]
+  );
 
   return (
     <SocketContext.Provider value={value}>

@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
         // Password required only for email/password authentication
         return this.authMethod === 'email-password';
       },
-      minlength: [6, 'Password must be at least 6 characters'],
+      minlength: [4, 'Password must be at least 4 characters'],
       select: false, // Don't return password by default
     },
     fullName: {
@@ -38,7 +38,46 @@ const userSchema = new mongoose.Schema(
     },
     profilePicURL: {
       type: String,
-      default: 'https://res.cloudinary.com/demo/image/upload/default-avatar.png',
+      default: '/student_avatar.jpg',
+    },
+    // DBUU Campus Cohort & Academic Metadata
+    role: {
+      type: String,
+      enum: ['student', 'passout', 'mentor'],
+      default: 'student',
+      index: true,
+    },
+    department: {
+      type: String,
+      default: 'SoEC - Computer Science & Engineering',
+      trim: true,
+    },
+    academicYear: {
+      type: String,
+      default: '3rd Year',
+      trim: true,
+    },
+    rollNumber: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    graduationYear: {
+      type: Number,
+      default: null,
+    },
+    currentPosition: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    doubtsAsked: {
+      type: Number,
+      default: 0,
+    },
+    doubtsResolved: {
+      type: Number,
+      default: 0,
     },
     active: {
       type: Boolean,
@@ -206,6 +245,14 @@ userSchema.methods.getPublicProfile = function () {
     email: this.email,
     fullName: this.fullName,
     profilePicURL: this.profilePicURL,
+    role: this.role || 'student',
+    department: this.department || 'SoEC - Computer Science & Engineering',
+    academicYear: this.academicYear || '3rd Year',
+    rollNumber: this.rollNumber || '',
+    graduationYear: this.graduationYear || null,
+    currentPosition: this.currentPosition || '',
+    doubtsAsked: this.doubtsAsked || 0,
+    doubtsResolved: this.doubtsResolved || 0,
     profile: this.profile,
     authMethod: this.authMethod,
     createdAt: this.createdAt,

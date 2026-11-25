@@ -1,13 +1,14 @@
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   RoundedTextButton,
-  ButtonRounded,
 } from "../../../../components/form-controls/";
 import {
+  DBUU_ACADEMIC_YEARS,
+  DBUU_DEPARTMENTS,
+  DBUU_ROLES,
   showCustomTextToast,
-  showNotAvailableToast,
 } from "../../../../utilities";
 
 export default function HeroForm() {
@@ -19,18 +20,46 @@ export default function HeroForm() {
     firstName: "",
     lastName: "",
     headline: "",
-    countryLoc: "",
-    postalCodeLoc: "",
+    countryLoc: "India",
+    postalCodeLoc: "248007",
+    role: DBUU_ROLES.STUDENT,
+    department: DBUU_DEPARTMENTS[0],
+    academicYear: "3rd Year",
+    rollNumber: "",
+    graduationYear: "2024",
+    currentPosition: "",
   });
-  const [isRegistering, setIsRegistering] = useState(true); // Toggle between register/login
+  const [isRegistering, setIsRegistering] = useState(false); // Default to Sign In view first
   const [profileImage, setProfileImage] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState(null);
+
+  useEffect(() => {
+    const handleAuthModeChange = (event) => {
+      if (event.detail === "login") setIsRegistering(false);
+      if (event.detail === "register") setIsRegistering(true);
+    };
+    window.addEventListener("dbuu-auth-mode", handleAuthModeChange);
+    return () => window.removeEventListener("dbuu-auth-mode", handleAuthModeChange);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleRoleSelect = (nextRole) => {
+    setFormData((prev) => ({
+      ...prev,
+      role: nextRole,
+      academicYear:
+        nextRole === DBUU_ROLES.MENTOR
+          ? "Faculty"
+          : nextRole === DBUU_ROLES.PASSOUT
+          ? "Alumni"
+          : "3rd Year",
     }));
   };
 
@@ -75,7 +104,8 @@ export default function HeroForm() {
       return;
     }
 
-    if (formData.password.length < 6) {
+    // Validate password length only for new registrations (default demo user may use short password on login)
+    if (isRegistering && formData.password.length < 6) {
       showCustomTextToast("Password must be at least 6 characters", 3);
       return;
     }
@@ -92,6 +122,12 @@ export default function HeroForm() {
     import("./HeroFormUtil").then(({ handleEmailRegister, handleEmailLogin }) => {
       if (isRegistering) {
         const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+        const defaultHeadline =
+          formData.role === DBUU_ROLES.MENTOR
+            ? formData.currentPosition || `Faculty Mentor • ${formData.department}`
+            : formData.role === DBUU_ROLES.PASSOUT
+            ? formData.currentPosition || `Alumni (${formData.graduationYear || "Pass-out"}) • ${formData.department}`
+            : `${formData.department} • ${formData.academicYear}`;
         handleEmailRegister(
           { 
             email: formData.email, 
@@ -99,9 +135,15 @@ export default function HeroForm() {
             fullName: fullName,
             firstName: formData.firstName,
             lastName: formData.lastName,
-            headline: formData.headline,
+            headline: formData.headline.trim() || defaultHeadline,
             countryLoc: formData.countryLoc,
             postalCodeLoc: formData.postalCodeLoc,
+            role: formData.role,
+            department: formData.department,
+            academicYear: formData.academicYear,
+            rollNumber: formData.rollNumber,
+            graduationYear: formData.role === DBUU_ROLES.PASSOUT ? formData.graduationYear : null,
+            currentPosition: formData.currentPosition,
             profileImage: profileImage, // Pass profile image file
           }, 
           dispatch, 
@@ -125,26 +167,53 @@ export default function HeroForm() {
     objNavigate("/forgot-password");
   };
 
-  const handleJoinGoogleClick = (e) => {
-    e.preventDefault();
-    import("./HeroFormUtil").then(({ handleAsyncJoinGoogle }) => {
-      handleAsyncJoinGoogle(dispatch, objNavigate);
-    });
-  };
-
   const handleTermsAndConditions = () => {
-    showNotAvailableToast();
+    showCustomTextToast("DBUU Student Connect campus policy: use your academic identity respectfully.", 2.5);
   };
 
   return (
-    <form className="w-full sm:w-[408px]" onSubmit={handleAgreeAndJoinClick}>
-      <p className="pb-[24px] sm:pb-0 text-[33px] sm:text-[58px] text-color-text-accent sm:font-light leading-[1.2]  sm:text-opacity-90">
-        Welcome to your professional community
+    <form className="w-full sm:w-[440px]" onSubmit={handleAgreeAndJoinClick}>
+      <p className="pb-[16px] sm:pb-0 text-[30px] sm:text-[46px] text-[#172B52] font-light leading-[1.18]">
+        Welcome to <span className="font-bold">DBUU</span> Student Connect
       </p>
-      <div className=" pt-3 pb-7 sm:pt-8 sm:pb-4">
+      <p className="text-sm text-slate-600 mt-2">
+        Dev Bhoomi Uttarakhand University intra-campus mentorship &amp; doubt support portal.
+      </p>
+      <div className=" pt-3 pb-7 sm:pt-6 sm:pb-4">
         <div className="flex flex-col gap-3">
           {isRegistering && (
             <>
+              {/* Campus Role Selector */}
+              <div className="bg-[#FFF9F3] border border-orange-200 rounded-xl p-2.5">
+                <label className="block text-[11px] font-bold text-[#172B52] uppercase tracking-wider mb-1.5">
+                  Select Campus Role
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: DBUU_ROLES.STUDENT, label: "Student", icon: "fa-graduation-cap" },
+                    { id: DBUU_ROLES.PASSOUT, label: "Pass-out", icon: "fa-user-tie" },
+                    { id: DBUU_ROLES.MENTOR, label: "Mentor", icon: "fa-chalkboard-user" },
+                  ].map((option) => {
+                    const active = formData.role === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => handleRoleSelect(option.id)}
+                        className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
+                          active
+                            ? "bg-[#172B52] text-white border-[#172B52] shadow-sm"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-[#F58220]"
+                        }`}
+                      >
+                        <i className={`fa-solid ${option.icon} ${active ? "text-[#F58220]" : "text-slate-500"}`} />
+                        <span>{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <input
                   className="flex-1 h-12 border-color-button-gray rounded-sm bg-transparent px-3 text-base"
@@ -215,7 +284,7 @@ export default function HeroForm() {
             type="email"
             name="email"
             id="input-text-email"
-            placeholder="Email or phone number"
+            placeholder="DBUU email (e.g. rajat.kishore@dbuu.ac.in)"
             value={formData.email}
             onChange={handleInputChange}
             required
@@ -225,43 +294,93 @@ export default function HeroForm() {
             type="password"
             name="password"
             id="input-text-pass"
-            placeholder="Password (6+ characters)"
+            placeholder={isRegistering ? "Password (6+ characters)" : "Password"}
             value={formData.password}
             onChange={handleInputChange}
             required
-            minLength={6}
+            minLength={isRegistering ? 6 : 1}
           />
           {isRegistering && (
             <>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleInputChange}
+                className="w-full h-11 border-color-button-gray rounded-sm bg-white px-3 text-sm text-slate-800"
+              >
+                {DBUU_DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+
+              {formData.role === DBUU_ROLES.STUDENT && (
+                <div className="flex gap-2">
+                  <select
+                    name="academicYear"
+                    value={formData.academicYear}
+                    onChange={handleInputChange}
+                    className="flex-1 h-11 border-color-button-gray rounded-sm bg-white px-3 text-sm text-slate-800"
+                  >
+                    {DBUU_ACADEMIC_YEARS.map((yr) => (
+                      <option key={yr} value={yr}>
+                        {yr}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="flex-1 h-11 border-color-button-gray rounded-sm bg-transparent px-3 text-sm"
+                    type="text"
+                    name="rollNumber"
+                    placeholder="Roll No. (e.g. 24BTCSE0039)"
+                    value={formData.rollNumber}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              )}
+
+              {formData.role === DBUU_ROLES.PASSOUT && (
+                <div className="flex gap-2">
+                  <input
+                    className="w-32 h-11 border-color-button-gray rounded-sm bg-transparent px-3 text-sm"
+                    type="number"
+                    name="graduationYear"
+                    placeholder="Batch (2024)"
+                    value={formData.graduationYear}
+                    onChange={handleInputChange}
+                  />
+                  <input
+                    className="flex-1 h-11 border-color-button-gray rounded-sm bg-transparent px-3 text-sm"
+                    type="text"
+                    name="currentPosition"
+                    placeholder="Current Role (e.g. SWE @ TCS)"
+                    value={formData.currentPosition}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              )}
+
+              {formData.role === DBUU_ROLES.MENTOR && (
+                <input
+                  className="w-full h-11 border-color-button-gray rounded-sm bg-transparent px-3 text-sm"
+                  type="text"
+                  name="currentPosition"
+                  placeholder="Designation (e.g. Assistant Professor, SoEC)"
+                  value={formData.currentPosition}
+                  onChange={handleInputChange}
+                />
+              )}
+
               <input
-                className="w-full h-12 border-color-button-gray rounded-sm bg-transparent px-3 text-base"
+                className="w-full h-11 border-color-button-gray rounded-sm bg-transparent px-3 text-sm"
                 type="text"
                 name="headline"
                 id="input-text-headline"
-                placeholder="Professional Headline (e.g., Software Engineer at XYZ)"
+                placeholder="Academic Headline (optional — auto-filled if blank)"
                 value={formData.headline}
                 onChange={handleInputChange}
               />
-              <div className="flex gap-2">
-                <input
-                  className="flex-1 h-12 border-color-button-gray rounded-sm bg-transparent px-3 text-base"
-                  type="text"
-                  name="countryLoc"
-                  id="input-text-country"
-                  placeholder="Country"
-                  value={formData.countryLoc}
-                  onChange={handleInputChange}
-                />
-                <input
-                  className="flex-1 h-12 border-color-button-gray rounded-sm bg-transparent px-3 text-base"
-                  type="text"
-                  name="postalCodeLoc"
-                  id="input-text-postalcode"
-                  placeholder="Postal Code"
-                  value={formData.postalCodeLoc}
-                  onChange={handleInputChange}
-                />
-              </div>
             </>
           )}
         </div>
@@ -276,27 +395,29 @@ export default function HeroForm() {
             </button>
           </div>
         )}
-        <p className=" py-3 text-[15px] leading-5 text-color-text font-medium">
-          By clicking Agree & Join, you agree to the LinkedIn{" "}
-          <span
-            onClick={handleTermsAndConditions}
-            className=" hover:cursor-pointer hover:underline text-color-blue font-bold"
-          >
-            User Agreement, Privacy Policy
-          </span>
-          {" and "}
-          <span
-            onClick={handleTermsAndConditions}
-            className="hover:cursor-pointer hover:underline text-color-blue  font-bold"
-          >
-            Cookie Policy
-          </span>
-          .
-        </p>
+        {isRegistering && (
+          <p className="py-3 text-[13px] leading-5 text-color-text font-medium">
+            By clicking Agree &amp; Join, you agree to the DBUU Connect{" "}
+            <span
+              onClick={handleTermsAndConditions}
+              className="hover:cursor-pointer hover:underline text-color-blue font-bold"
+            >
+              Campus Guidelines, Privacy Policy
+            </span>
+            {" and "}
+            <span
+              onClick={handleTermsAndConditions}
+              className="hover:cursor-pointer hover:underline text-color-blue font-bold"
+            >
+              Code of Conduct
+            </span>
+            .
+          </p>
+        )}
         <div className="sm:text-xl">
           <RoundedTextButton
             strColor="blue"
-            strText={isRegistering ? "Agree & Join" : "Sign In"}
+            strText={isRegistering ? "Agree & Join DBUU Connect" : "Sign In"}
             booBorder={true}
             booColoredBackground={true}
             booFullWidth={true}
@@ -307,51 +428,12 @@ export default function HeroForm() {
           <button
             type="button"
             onClick={() => setIsRegistering(!isRegistering)}
-            className="text-color-blue hover:underline text-sm"
+            className="text-color-blue hover:underline text-sm font-semibold"
           >
             {isRegistering 
-              ? "Already have an account? Sign in" 
-              : "New to LinkedIn? Join now"}
+              ? "Already have a DBUU account? Sign in" 
+              : "New to DBUU Connect? Join now"}
           </button>
-        </div>
-        <div className=" mt-4">
-          <ButtonRounded onClick={handleJoinGoogleClick}>
-            <div className="flex gap-4 sm:gap-6 items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                xmlnsXlink="http://www.w3.org/1999/xlink"
-                viewBox="0 0 24 24"
-                width="24px"
-                height="24px"
-                x="0"
-                y="0"
-                preserveAspectRatio="xMinYMin meet"
-                focusable="false"
-              >
-                <g>
-                  <path
-                    fill="#E94435"
-                    d="M12.1,5.8c1.6-0.1,3.1,0.5,4.3,1.6l2.6-2.7c-1.9-1.8-4.4-2.7-6.9-2.7c-3.8,0-7.2,2-9,5.3l3,2.4C7.1,7.2,9.5,5.7,12.1,5.8z"
-                  ></path>
-                  <path
-                    fill="#F8BB15"
-                    d="M5.8,12c0-0.8,0.1-1.6,0.4-2.3l-3-2.4C2.4,8.7,2,10.4,2,12c0,1.6,0.4,3.3,1.1,4.7l3.1-2.4C5.9,13.6,5.8,12.8,5.8,12z"
-                  ></path>
-                  <path
-                    fill="#34A751"
-                    d="M15.8,17.3c-1.2,0.6-2.5,1-3.8,0.9c-2.6,0-4.9-1.5-5.8-3.9l-3.1,2.4C4.9,20,8.3,22.1,12,22c2.5,0.1,4.9-0.8,6.8-2.3L15.8,17.3z"
-                  ></path>
-                  <path
-                    fill="#547DBE"
-                    d="M22,12c0-0.7-0.1-1.3-0.2-2H12v4h6.1v0.2c-0.3,1.3-1.1,2.4-2.2,3.1l3,2.4C21,17.7,22.1,14.9,22,12z"
-                  ></path>
-                </g>
-              </svg>
-              <p className=" text-color-button-gray text-lg sm:text-xl font-medium">
-                Join with Google
-              </p>
-            </div>
-          </ButtonRounded>
         </div>
       </div>
     </form>
